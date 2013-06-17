@@ -1,6 +1,8 @@
-import sys
+import sys, datetime
 from py2neo import neo4j, cypher
 from pygithub3 import Github
+
+PAGINATION_SIZE = 100
 
 my_config = {'verbose': sys.stderr}
 
@@ -10,6 +12,12 @@ pass_string = open('pass.txt', 'r').read()
 gh = Github(user='wikiteams',login='wikiteams',password=pass_string)
 #gh.services.base.Service.set_user('wikiteams')
 #repo_service = Repo(login='wikiteams',password='')
+
+def json_s(n):
+    return json_serialize(n)
+
+def json_serialize(n):
+    return str(n)
 
 def handle_row(row):
     print 'inside handle_row(row)'
@@ -21,6 +29,9 @@ def handle_row(row):
     #handle_repo(lista[3], lista[4].split("\"")[0])
     #print node['owner'] + " " + node['name']
     handle_repo(node,node['owner'],node['name'])
+
+def getdate():
+    return datetime.datetime.now()
 
 # function handle_repo
 #
@@ -39,15 +50,24 @@ def handle_repo(node,owner,name):
     watchers_pages = watchers.pages
     print 'Total pages: ' + str(watchers_pages)
     node['watchers_pages'] = watchers_pages
+    node['watchers_pages_date'] = json_s(getdate())
+    node['watchers'] = watchers_pages * PAGINATION_SIZE
+    node['watchers_date'] = json_s(getdate())
     print 'saved watchers_pages'
+#    x = 1
+    #for page in watchers:
+#	print 'page no: ' + str(x)
+#	x += 1
+#	for resource in page:
+#	    print resource
     #watchers_count = len(watchers_list)
     #print coll.all()
     #result = repository.collaborators.list()
     #print result.all()
-    print owner
-    for resource in coll.iterator():
+#    print owner
+#    for resource in coll.iterator():
 	#add_collaborator(resource, repository, owner)
-	print resource
+#	print resource
 
 def add_collaborator(name,repo,owner):
     cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
