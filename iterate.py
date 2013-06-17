@@ -5,8 +5,7 @@ from pygithub3 import Github
 graph_db = neo4j.GraphDatabaseService()
 
 gh = Github(user='wikiteams')
-#repo_service = Repo(login='wikiteams',password='WikiTe@ms8')
-
+#repo_service = Repo(login='wikiteams',password='')
 
 def handle_row(row):
     print 'inside handle_row(row)'
@@ -21,10 +20,16 @@ def handle_repo(owner,name):
     print 'name: ' + name
     print 'owner: ' + owner
     repository = gh.repos.get(user=owner,repo=name)
-    print repository
+    #print repository
     coll = gh.repos.collaborators.list(user=owner,repo=name)
-    print coll.all()
+    #print coll.all()
     #result = repository.collaborators.list()
     #print result.all()
+    for resource in coll.iterator():
+	add_collaborator(resource, repository)
+
+def add_collaborator(name,repo):
+    print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
+    
 
 cypher.execute(graph_db, "START z=node(*) WHERE id(z) > 0 and id(z) < " + sys.argv[1] + " RETURN z", row_handler=handle_row)
