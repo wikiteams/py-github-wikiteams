@@ -6,7 +6,8 @@ my_config = {'verbose': sys.stderr}
 
 graph_db = neo4j.GraphDatabaseService()
 
-gh = Github(user='wikiteams',login='wikiteams',password='xxx')
+pass_string = open('pass.txt', 'r').read()
+gh = Github(user='wikiteams',login='wikiteams',password=pass_string)
 #gh.services.base.Service.set_user('wikiteams')
 #repo_service = Repo(login='wikiteams',password='')
 
@@ -29,9 +30,10 @@ def handle_repo(owner,name):
     #result = repository.collaborators.list()
     #print result.all()
     for resource in coll.iterator():
-	add_collaborator(resource, repository)
+	add_collaborator(resource, repository, owner)
 
-def add_collaborator(name,repo):
+def add_collaborator(name,repo,owner):
+    cyper.execute(graph_db, "CREATE (n {name: {" + name + "}}")
     print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
     
 
