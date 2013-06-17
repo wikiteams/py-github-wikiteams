@@ -2,9 +2,12 @@ import sys
 from py2neo import neo4j, cypher
 from pygithub3 import Github
 
+my_config = {'verbose': sys.stderr}
+
 graph_db = neo4j.GraphDatabaseService()
 
-gh = Github(user='wikiteams')
+gh = Github(user='wikiteams',login='wikiteams',password='xxx')
+#gh.services.base.Service.set_user('wikiteams')
 #repo_service = Repo(login='wikiteams',password='')
 
 def handle_row(row):
