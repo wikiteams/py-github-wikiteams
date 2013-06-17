@@ -1,8 +1,9 @@
-import sys, datetime
+import sys, datetime, time
 from py2neo import neo4j, cypher
 from pygithub3 import Github
 
 PAGINATION_SIZE = 100
+SLEEP_TIME = 5
 
 my_config = {'verbose': sys.stderr}
 
@@ -28,7 +29,16 @@ def handle_row(row):
     #print 'len: ' + str(len(lista))
     #handle_repo(lista[3], lista[4].split("\"")[0])
     #print node['owner'] + " " + node['name']
-    handle_repo(node,node['owner'],node['name'])
+    while true:
+        try:
+	    handle_repo(node,node['owner'],node['name'])
+	    break
+	except pygithub3.exceptions.NotFound:
+	    print 'Ooops: error accessing data'
+	    time.sleep(SLEEP_TIME)
+	except RuntimeError:
+	    print 'Ooops: runtime error while accessing data'
+	    time.sleep(SLEEP_TIME)
 
 def getdate():
     return datetime.datetime.now()
