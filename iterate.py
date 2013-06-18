@@ -1,6 +1,6 @@
 import sys, datetime, time
 from py2neo import neo4j, cypher
-from pygithub3 import Github
+from pygithub3 import Github, exceptions
 
 PAGINATION_SIZE = 100
 SLEEP_TIME = 5
@@ -29,15 +29,20 @@ def handle_row(row):
     #print 'len: ' + str(len(lista))
     #handle_repo(lista[3], lista[4].split("\"")[0])
     #print node['owner'] + " " + node['name']
-    while true:
+    z = 0
+    while True:
         try:
 	    handle_repo(node,node['owner'],node['name'])
 	    break
-	except pygithub3.exceptions.NotFound:
+	except exceptions.NotFound:
 	    print 'Ooops: error accessing data'
+	    z += 1
+	    if z>5:
+	        break
 	    time.sleep(SLEEP_TIME)
 	except RuntimeError:
 	    print 'Ooops: runtime error while accessing data'
+	    z += 1
 	    time.sleep(SLEEP_TIME)
 
 def getdate():
@@ -85,4 +90,4 @@ def add_collaborator(name,repo,owner):
     print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
     
 
-cypher.execute(graph_db, "START z=node(*) WHERE id(z) > 0 and id(z) < " + sys.argv[1] + " RETURN z", row_handler=handle_row)
+cypher.execute(graph_db, "START z=node(*) WHERE id(z) > " + sys.argv[1] + " and id(z) < " + sys.argv[2] + " RETURN z", row_handler=handle_row)
