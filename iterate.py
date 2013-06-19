@@ -97,7 +97,14 @@ def add_watcher(name,repo,owner):
     print 'check if doesnt exist'
     data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type?=str('user') and n.name=str('" + name + "')) RETURN n")
     print 'before add watcher to DB'
-    if len(data)<1:
+    #print 'len is: ' + str(len(data))
+    #print 'data: ' + str(data[0]) + ' ' + str(data[1])
+    if (str(data[0]) == '[]'):
+	decision = 1
+    else:
+	decision = 0
+    if decision == 1:
+	print 'adding!!!!'
 	cypher.execute(graph_db, "CREATE (n {type: str('user'), name: str('" + name + "')})")
     print 'before cypher-ql add user as watcher'
     cypher.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type?=str('user') and n.name=str('" + name + "')) and (m.name=str('" + repo + "') and m.owner?=str('" + owner + "')) CREATE (n)-[r:WATCHES]->(m)")
