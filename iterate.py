@@ -95,21 +95,21 @@ def user_name(name):
 
 def add_watcher(name,repo,owner):
     print 'check if doesnt exist'
-    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type=user and n.name= " + name + ") RETURN n")
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type?={user} and n.name={" + name + "}) RETURN n")
     print 'before add watcher to DB'
     if len(data)<1:
-	cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
+	cyper.execute(graph_db, "CREATE (n {type: {user}, name: {" + name + "}}")
     print 'before cypher-ql add user as watcher'
-    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:WATCHES]->(m)")
+    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=?{user} and n.name={" + name + "}) and (m.name={" + name + "} and m.owner?={" + owner + "}) CREATE (n)-[r:WATCHES]->(m)")
 
 def add_collaborator(name,repo,owner):
     print 'check if doesnt exist'
-    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type=user and n.name= " + name + ") RETURN n")
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type?={user} and n.name={" + name + "}) RETURN n")
     print 'before add user to DB'
     if len(data)<1:
-        cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
+        cyper.execute(graph_db, "CREATE (n {type: {user}, name: {" + name + "}}")
     print 'before cypher-ql add user as collaborater'
-    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:COLLABORATES]->(m)")
+    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type?={user} and n.name={" + name + "}) and (m.name={" + name + "} and m.owner?={" + owner + "}) CREATE (n)-[r:COLLABORATES]->(m)")
     print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
     
 
