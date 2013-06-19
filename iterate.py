@@ -76,7 +76,7 @@ def handle_repo(node,owner,name):
 	for resource in page:
 	    print resource
 	    rr = user_name(resource)
-	    add_watcher(str(rr), repository, owner)
+	    add_watcher(str(rr), name, owner)
     #watchers_count = len(watchers_list)
     #print coll.all()
     #result = repository.collaborators.list()
@@ -85,7 +85,7 @@ def handle_repo(node,owner,name):
     for resource in coll.iterator():
 	print resource
 	rr = user_name(resource)
-	add_collaborator(str(rr), repository, owner)
+	add_collaborator(str(rr), name, owner)
 
 def user_name(name):
     rr = str(name)
@@ -95,12 +95,12 @@ def user_name(name):
 
 def add_watcher(name,repo,owner):
     print 'check if doesnt exist'
-    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type?={user} and n.name={" + name + "}) RETURN n")
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type?=str('user') and n.name=str('" + name + "')) RETURN n")
     print 'before add watcher to DB'
     if len(data)<1:
-	cyper.execute(graph_db, "CREATE (n {type: {user}, name: {" + name + "}}")
+	cypher.execute(graph_db, "CREATE (n {type: str('user'), name: str('" + name + "')})")
     print 'before cypher-ql add user as watcher'
-    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=?{user} and n.name={" + name + "}) and (m.name={" + name + "} and m.owner?={" + owner + "}) CREATE (n)-[r:WATCHES]->(m)")
+    cypher.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type?=str('user') and n.name=str('" + name + "')) and (m.name=str('" + repo + "') and m.owner?=str('" + owner + "')) CREATE (n)-[r:WATCHES]->(m)")
 
 def add_collaborator(name,repo,owner):
     print 'check if doesnt exist'
