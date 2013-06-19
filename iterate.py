@@ -75,27 +75,39 @@ def handle_repo(node,owner,name):
 	x += 1
 	for resource in page:
 	    print resource
+	    rr = user_name(resource)
+	    add_watcher(str(rr), repository, owner)
     #watchers_count = len(watchers_list)
     #print coll.all()
     #result = repository.collaborators.list()
     #print result.all()
 #    print owner
     for resource in coll.iterator():
-	add_collaborator(resource, repository, owner)
 	print resource
+	rr = user_name(resource)
+	add_collaborator(str(rr), repository, owner)
+
+def user_name(name):
+    rr = str(name)
+    rr = (rr.split("("))[1]
+    rr = (rr.split(")"))[0]
+    return str(rr)
 
 def add_watcher(name,repo,owner):
     print 'check if doesnt exist'
-    data = cypher.execute(graph_db, "START n=node(*) WHERE (type=user and name= " + name + ")")
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type=user and n.name= " + name + ") RETURN n")
     print 'before add watcher to DB'
-    if len(data)>0:
+    if len(data)<1:
 	cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
-    print 'before cypher-ql add user as watcher']
+    print 'before cypher-ql add user as watcher'
     cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:WATCHES]->(m)")
 
 def add_collaborator(name,repo,owner):
+    print 'check if doesnt exist'
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (n.type=user and n.name= " + name + ") RETURN n")
     print 'before add user to DB'
-    cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
+    if len(data)<1:
+        cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
     print 'before cypher-ql add user as collaborater'
     cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:COLLABORATES]->(m)")
     print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
