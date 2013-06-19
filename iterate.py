@@ -69,24 +69,35 @@ def handle_repo(node,owner,name):
     node['watchers'] = watchers_pages * PAGINATION_SIZE
     node['watchers_date'] = json_s(getdate())
     print 'saved watchers_pages'
-#    x = 1
-    #for page in watchers:
-#	print 'page no: ' + str(x)
-#	x += 1
-#	for resource in page:
-#	    print resource
+    x = 1
+    for page in watchers:
+	print 'page no: ' + str(x)
+	x += 1
+	for resource in page:
+	    print resource
     #watchers_count = len(watchers_list)
     #print coll.all()
     #result = repository.collaborators.list()
     #print result.all()
 #    print owner
-#    for resource in coll.iterator():
-	#add_collaborator(resource, repository, owner)
-#	print resource
+    for resource in coll.iterator():
+	add_collaborator(resource, repository, owner)
+	print resource
+
+def add_watcher(name,repo,owner):
+    print 'check if doesnt exist'
+    data = cypher.execute(graph_db, "START n=node(*) WHERE (type=user and name= " + name + ")")
+    print 'before add watcher to DB'
+    if len(data)>0:
+	cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
+    print 'before cypher-ql add user as watcher']
+    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:WATCHES]->(m)")
 
 def add_collaborator(name,repo,owner):
+    print 'before add user to DB'
     cyper.execute(graph_db, "CREATE (n {type: user, name: {" + name + "}}")
-    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and m.")
+    print 'before cypher-ql add user as collaborater'
+    cyper.execute(graph_db, "START n=node(*), m=node(*) WHERE (n.type=user and n.name=" + name + ") and (m.name= " + name + " and m.owner=" + owner + ") CREATE (n)-[r:COLLABORATES]->(m)")
     print 'adding a collaborator ' + str(name) + ' to repo ' + str(repo)
     
 
