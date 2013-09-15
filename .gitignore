@@ -6,3 +6,4 @@ pass.txt
 /venv
 
 *.pyc
+*.log
