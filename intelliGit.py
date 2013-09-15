@@ -102,7 +102,7 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
-        '4. Liczba gwiazdek  (to zostanie użyte jako jakość zespołu)'
+        '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
         stargazers = repository.get_stargazers()
         repo_stargazers = []
         for stargazer in stargazers:
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
                    ' to a repo ' + key)
 
-        '6. Liczba Issues w poszczególnych typach'
+        '6. Liczba Issues w poszczegolnych typach'
         try:
             issues = repository.get_issues()
             repo_issues = []
@@ -145,6 +145,16 @@ if __name__ == "__main__":
             repo_branches.append(branch)
         repo.setBranches(repo_branches)
         scream.log('Added branches of count: ' + str(len(repo_branches)) +
+                   ' to a repo ' + key)
+
+        'get subscribers'
+        subscribers = repository.get_subscribers()
+        repo_subscribers = []
+        for subscriber in subscribers:
+            repo_subscribers.append(subscriber)
+        repo.setSubscribers(repo_subscribers)
+        scream.log('Added subscribers of count: ' +
+                   str(len(repo_subscribers)) +
                    ' to a repo ' + key)
 
         scream.say('Persisting a repo to CSV output...')
