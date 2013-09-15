@@ -11,6 +11,7 @@ from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
 import csv
 import scream
+import gc
 
 repos = dict()
 file_names = ['by-forks-20028-33', 'by-forks-20028-44',
@@ -28,6 +29,8 @@ if __name__ == "__main__":
 
     pass_string = open('pass.txt', 'r').read()
     gh = Github('wikiteams', pass_string)
+
+    scream.ssay('Garbage collector is ' + str(gc.isenabled()))
 
     for filename in file_names:
         scream.say('------ WORKING WITH FILE : ' + filename)
@@ -99,6 +102,15 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
+        '4. Liczba gwiazdek  (to zostanie użyte jako jakość zespołu)'
+        stargazers = repository.get_stargazers()
+        repo_stargazers = []
+        for stargazer in stargazers:
+            repo_stargazers.append(stargazer)
+        repo.setStargazers(repo_stargazers)
+        scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
+                   ' to a repo ' + key)
+
         '6. Liczba Issues w poszczególnych typach'
         try:
             issues = repository.get_issues()
@@ -134,5 +146,10 @@ if __name__ == "__main__":
         repo.setBranches(repo_branches)
         scream.log('Added branches of count: ' + str(len(repo_branches)) +
                    ' to a repo ' + key)
+
+        scream.say('Persisting a repo to CSV output...')
+
+        'handle here writing to output, dont make it at end when stack'
+        'is full of repos, but do it a repo by repo...'
 
         scream.ssay('Finished processing repo: ' + key + '.. moving on... ')

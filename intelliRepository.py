@@ -36,6 +36,7 @@ class MyRepository():
     repository_pulls = None
     repository_pushed_at = None
     repository_size = None
+    repository_stargazers = None
     repository_watchers = None
     repository_url = None
 
@@ -68,6 +69,9 @@ class MyRepository():
 
     def setWatchers(self, watchers):
         self.repository_watchers = watchers
+
+    def setStargazers(self, stargazers):
+        self.repository_stargazers = stargazers
 
     def setLanguage(self, languages):
         self.repository_language = languages
