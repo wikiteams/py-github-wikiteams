@@ -8,7 +8,7 @@ Dont fork without good reason, use clone instead
 '''
 
 from intelliRepository import MyRepository
-from github import Github, Repository
+from github import Github, Repository, GithubException
 import csv
 import scream
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
                 forks = row[2]
                 watchers = row[3]
-                key = name + '/' + owner
+                key = owner + '/' + name
                 scream.log('Key built: ' + key)
 
                 repo = MyRepository()
@@ -67,7 +67,35 @@ if __name__ == "__main__":
 
     for key in repos:
         repo = repos[key]
-        repository = gh.get_repo(repo.getKey())
-        languages = repository.get_languages()
+
+        try:
+            repository = gh.get_repo(repo.getKey())
+        except GithubException.UnknownObjectException as e:
+            scream.log('Repo with key + ' + key +
+                       ' not found, error({0}): {1}'.
+                       format(e.errno, e.strerror))
+
+        'getting languages of a repo'
+        languages = repository.get_languages()  # dict object (json? object)
         repo.setLanguage(languages)
-        scream.log()
+        scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
+
+        'getting labels, label is a tag which you can put in an issue'
+        labels = repository.get_labels()  # github.Label object
+        repo_labels = []
+        for label in labels:
+            repo_labels.append(label)
+        repo.setLabels(repo_labels)
+        scream.log('Added labels of count: ' + str(len(repo_labels)) +
+                   ' to a repo ' + key)
+
+        'getting repo branches'
+        branches = repository.get_branches()
+        repo_branches = []
+        for branch in branches:
+            repo_branches.append(branch)
+        repo.setBranches(repo_branches)
+        scream.log('Added branches of count: ' + str(len(repo_branches)) +
+                   ' to a repo ' + key)
+
+        scream.ssay('Finished processing repo: ' + key + '.. moving on... ')

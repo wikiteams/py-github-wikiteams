@@ -14,26 +14,28 @@ class MyRepository():
     def __init__(self):
         self.data = []
 
-    repository_url = None
-    repository_has_downloads = None
+    repository_branches = None
     repository_created_at = None
-    repository_has_issues = None
     repository_description = None
-    repository_forks = None
     repository_fork = None
+    repository_forks = None
+    repository_has_downloads = None
+    repository_has_issues = None
     repository_has_wiki = None
     repository_homepage = None
-    repository_size = None
-    repository_private = None
-    repository_name = None
-    repository_owner = None
-    repository_open_issues = None
-    repository_watchers = None
-    repository_pushed_at = None
-    repository_language = None
-    repository_organization = None
     repository_integrate_branch = None
+    repository_labels = None
+    repository_language = None
     repository_master_branch = None
+    repository_name = None
+    repository_open_issues = None
+    repository_organization = None
+    repository_owner = None
+    repository_private = None
+    repository_pushed_at = None
+    repository_size = None
+    repository_watchers = None
+    repository_url = None
 
     def setKey(self, key):
         self.key = key
@@ -67,6 +69,12 @@ class MyRepository():
 
     def setLanguage(self, languages):
         self.repository_language = languages
+
+    def setLabels(self, labels):
+        self.repository_labels = labels
+
+    def setBranches(self, branches):
+        self.repository_branches = branches
 
     def getLanguages(self):
         return self.repository_language

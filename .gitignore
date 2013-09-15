@@ -7,3 +7,6 @@ pass.txt
 
 *.pyc
 *.log
+
+# we already submitted data compressed to 7z, we can skip bare csv files
+*.csv
