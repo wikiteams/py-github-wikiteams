@@ -99,6 +99,22 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
+        '6. Liczba Issues w poszczególnych typach'
+        try:
+            issues = repository.get_issues()
+            repo_issues = []
+            for issue in issues:
+                repo_issues.append(issue)
+            repo.setIssues(repo_issues)
+            scream.log('Added issues of count: ' + str(len(repo_issues)) +
+                       ' to a repo ' + key)
+        except GithubException as e:
+            scream.log('Repo didnt gave any issues, or paginated through' +
+                       ' issues gave error. Issues are disabled for this' +
+                       ' repo? + ' + key +
+                       ', error({0}): {1}'.
+                       format(e.status, e.data))
+
         '10. Liczba Pull Requests'
         '11. Liczba zaakceptowanych Pull Requests'
         pulls = repository.get_pulls()

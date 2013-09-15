@@ -24,6 +24,7 @@ class MyRepository():
     repository_has_wiki = None
     repository_homepage = None
     repository_integrate_branch = None
+    repository_issues = None
     repository_labels = None
     repository_language = None
     repository_master_branch = None
@@ -73,6 +74,9 @@ class MyRepository():
 
     def setLabels(self, labels):
         self.repository_labels = labels
+
+    def setIssues(self, issues):
+        self.repository_issues = issues
 
     def setBranches(self, branches):
         self.repository_branches = branches
