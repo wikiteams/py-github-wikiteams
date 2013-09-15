@@ -32,6 +32,7 @@ class MyRepository():
     repository_organization = None
     repository_owner = None
     repository_private = None
+    repository_pulls = None
     repository_pushed_at = None
     repository_size = None
     repository_watchers = None
@@ -75,6 +76,9 @@ class MyRepository():
 
     def setBranches(self, branches):
         self.repository_branches = branches
+
+    def setPulls(self, pulls):
+        self.repository_pulls = pulls
 
     def getLanguages(self):
         return self.repository_language

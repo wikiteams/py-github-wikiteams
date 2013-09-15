@@ -8,7 +8,8 @@ Dont fork without good reason, use clone instead
 '''
 
 from intelliRepository import MyRepository
-from github import Github, Repository, GithubException
+from github import Github, UnknownObjectException
+#from GithubException import UnknownObjectException
 import csv
 import scream
 
@@ -46,6 +47,7 @@ if __name__ == "__main__":
                     continue
                     #print 'length < 1'
 
+                '12. Liczba Fork'
                 forks = row[2]
                 watchers = row[3]
                 key = owner + '/' + name
@@ -70,10 +72,10 @@ if __name__ == "__main__":
 
         try:
             repository = gh.get_repo(repo.getKey())
-        except GithubException.UnknownObjectException as e:
+        except UnknownObjectException as e:
             scream.log('Repo with key + ' + key +
                        ' not found, error({0}): {1}'.
-                       format(e.errno, e.strerror))
+                       format(e.status, e.data))
 
         'getting languages of a repo'
         languages = repository.get_languages()  # dict object (json? object)
@@ -89,7 +91,18 @@ if __name__ == "__main__":
         scream.log('Added labels of count: ' + str(len(repo_labels)) +
                    ' to a repo ' + key)
 
+        '10. Liczba Pull Requests'
+        '11. Liczba zaakceptowanych Pull Requests'
+        pulls = repository.get_pulls()
+        repo_pulls = []
+        for pull in pulls:
+            repo_pulls.append(pull)
+        repo.setPulls(repo_pulls)
+        scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
+                   ' to a repo ' + key)
+
         'getting repo branches'
+        '13. Liczba Branch'
         branches = repository.get_branches()
         repo_branches = []
         for branch in branches:
