@@ -8,8 +8,7 @@ Dont fork without good reason, use clone instead
 '''
 
 from intelliRepository import MyRepository
-from github import Github, UnknownObjectException
-#from GithubException import UnknownObjectException
+from github import Github, UnknownObjectException, GithubException
 import csv
 import scream
 
@@ -17,7 +16,7 @@ repos = dict()
 file_names = ['by-forks-20028-33', 'by-forks-20028-44',
               'by-watchers-3391-118', 'by-watchers-129-82',
               'by-watchers-82-70']
-
+repos_reported_nonexist = []
 
 if __name__ == "__main__":
     '''
@@ -76,6 +75,8 @@ if __name__ == "__main__":
             scream.log('Repo with key + ' + key +
                        ' not found, error({0}): {1}'.
                        format(e.status, e.data))
+            repos_reported_nonexist.append(key)
+            continue
 
         'getting languages of a repo'
         languages = repository.get_languages()  # dict object (json? object)
@@ -83,13 +84,20 @@ if __name__ == "__main__":
         scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
 
         'getting labels, label is a tag which you can put in an issue'
-        labels = repository.get_labels()  # github.Label object
-        repo_labels = []
-        for label in labels:
-            repo_labels.append(label)
-        repo.setLabels(repo_labels)
-        scream.log('Added labels of count: ' + str(len(repo_labels)) +
-                   ' to a repo ' + key)
+        try:
+            labels = repository.get_labels()  # github.Label object
+            repo_labels = []
+            for label in labels:
+                repo_labels.append(label)
+            repo.setLabels(repo_labels)
+            scream.log('Added labels of count: ' + str(len(repo_labels)) +
+                       ' to a repo ' + key)
+        except GithubException as e:
+            scream.log('Repo didnt gave any labels, or paginated through' +
+                       ' labels gave error. Issues are disabled for this' +
+                       ' repo? + ' + key +
+                       ', error({0}): {1}'.
+                       format(e.status, e.data))
 
         '10. Liczba Pull Requests'
         '11. Liczba zaakceptowanych Pull Requests'
