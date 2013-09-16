@@ -82,13 +82,14 @@ if __name__ == "__main__":
     Starts process of work on CSV files which are output of google bigquery
     whenever intelli_git.py is executed as an standalone program
     '''
-    scream.say('start main')
+    scream.say('Start main execution')
     scream.say('Welcome to WikiTeams.pl GitHub repo getter!')
 
     pass_string = open('pass.txt', 'r').read()
     gh = Github('wikiteams', pass_string)
 
-    scream.ssay('Garbage collector is ' + str(gc.isenabled()))
+    is_gc_turned_on = 'turned on' if str(gc.isenabled()) else 'turned off'
+    scream.ssay('Garbage collector is ' + is_gc_turned_on)
 
     make_headers()
 
@@ -246,11 +247,17 @@ if __name__ == "__main__":
 
         scream.ssay('Finished processing repo: ' + key + '.. moving on... ')
 
-        del repos[key]
-
-        scream.ssay('(' + key + ' deleted)')
+        #del repos[key]
+        'Dictionary cannot change size during iteration'
+        'TO DO: associated fields purge so GC will finish the job'
+        'implement reset() in intelliRepository.py'
+        #scream.ssay('(' + key + ' deleted)')
 
         limit = gh.get_rate_limit()
 
         scream.ssay('Rate limit: ' + str(limit.rate.limit) +
                     ' remaining: ' + str(limit.rate.remaining))
+
+        reset_time = gh.rate_limiting_resettime()
+
+        scream.ssay('Rate limit reset time: ' + reset_time)

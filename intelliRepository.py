@@ -106,7 +106,7 @@ class MyRepository():
     def getSubscribers(self,):
         return self.repository_subscribers
 
-    def getSubscribersCount(self, subscribers):
+    def getSubscribersCount(self):
         return len(self.repository_subscribers)
 
     def setStargazers(self, stargazers):
