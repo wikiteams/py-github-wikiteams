@@ -15,6 +15,7 @@ class MyRepository():
         self.data = []
 
     repository_branches = None
+    repository_commits = None
     repository_contributors = None
     repository_created_at = None
     repository_description = None
@@ -72,6 +73,9 @@ class MyRepository():
     def setForks(self, forks):
         self.repository_forks = forks
 
+    def setCommits(self, commits):
+        self.repository_commits = commits
+
     def getForks(self):
         return self.repository_forks
 
@@ -89,6 +93,9 @@ class MyRepository():
 
     def setContributors(self, contributors):
         self.repository_contributors = contributors
+
+    def getContributors(self):
+        return self.repository_contributors
 
     def getContributorsCount(self):
         return len(self.repository_contributors)

@@ -42,11 +42,20 @@ def output_data(repo):
     with open('contributors.csv', 'ab') as output_csvfile:
         scream.ssay('contributors.csv opened for append..')
         contribwriter = csv.writer(output_csvfile, dialect=MyDialect)
-        for contributor in repo.get_contributors():
+        for contributor in repo.getContributors():
             tempv = (repo.getName(),
                      repo.getOwner(),
                      contributor.login)
             contribwriter.writerow(tempv)
+
+    with open('languages.csv', 'ab') as output_csvfile:
+        scream.ssay('languages.csv opened for append..')
+        langwriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for language in repo.getLanguages():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     language)
+            langwriter.writerow(tempv)
 
 
 if __name__ == "__main__":
