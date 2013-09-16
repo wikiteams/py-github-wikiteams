@@ -133,6 +133,12 @@ class MyRepository():
     def setIssues(self, issues):
         self.repository_issues = issues
 
+    def getIssues(self):
+        return self.repository_issues
+
+    def getIssuesCount(self):
+        return len(self.repository_issues)
+
     def setBranches(self, branches):
         self.repository_branches = branches
 

@@ -90,6 +90,17 @@ def output_data(repo):
                      label.color)
             labelswriter.writerow(tempv)
 
+    with open('issues.csv', 'ab') as output_csvfile:
+        scream.ssay('issues.csv opened for append..')
+        issueswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for issue in repo.getIssues():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     issue.id,
+                     issue.number,
+                     issue.title)
+            issueswriter.writerow(tempv)
+
 
 if __name__ == "__main__":
     '''
@@ -103,11 +114,17 @@ if __name__ == "__main__":
     with open('pass.txt', 'r') as passfile:
         for line in passfile:
             secrets.append(line)
-    login_or_token__ = secrets[0]
-    pass_string = secrets[1]
-    client_id__ = secrets[2]
-    client_secret__ = secrets[3]
-    gh = Github(client_id=client_id__, client_secret=client_secret__) if AUTH_WITH_TOKENS else Github(login_or_token__, pass_string)
+    login_or_token__ = str(secrets[0]).strip()
+    pass_string = str(secrets[1]).strip()
+    client_id__ = str(secrets[2]).strip()
+    client_secret__ = str(secrets[3]).strip()
+
+    if AUTH_WITH_TOKENS:
+        gh = Github(client_id=client_id__, client_secret=client_secret__)
+    else:
+        #print login_or_token__
+        #print pass_string
+        gh = Github(login_or_token__, pass_string)
 
     is_gc_turned_on = 'turned on' if str(gc.isenabled()) else 'turned off'
     scream.ssay('Garbage collector is ' + is_gc_turned_on)
