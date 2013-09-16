@@ -19,6 +19,26 @@ file_names = ['by-forks-20028-33', 'by-forks-20028-44',
               'by-watchers-82-70']
 repos_reported_nonexist = []
 
+
+class MyDialect(csv.Dialect):
+    strict = True
+    skipinitialspace = True
+    quoting = csv.QUOTE_NONE
+    delimiter = ','
+    lineterminator = '\n'
+
+
+def output_data(repo):
+    with open('repos.csv', 'ab') as output_csvfile:
+        scream.ssay('repos.csv opened for append..')
+        repowriter = csv.writer(output_csvfile, dialect=MyDialect)
+        tempv = (repo.getName(),
+                 repo.getOwner(),
+                 repo.getForksCount(),
+                 repo.getWatchersCount())
+        repowriter.writerow(tempv)
+
+
 if __name__ == "__main__":
     '''
     Starts process of work on CSV files which are output of google bigquery
@@ -80,6 +100,18 @@ if __name__ == "__main__":
                        format(e.status, e.data))
             repos_reported_nonexist.append(key)
             continue
+
+        '1. Rozmiar zespolu'
+        contributors = repository.get_contributors()
+        repo_contributors = []
+        for contributor in contributors:
+            repo_contributors.append(contributor)
+        repo.setContributors(repo_contributors)
+        #repo.setContributorsCount(len(repo_contributors))
+        'class fields are not garbage, its better to calculate count on demand'
+        scream.log('Added contributors of count: ' +
+                   str(len(repo_contributors)) +
+                   ' to a repo ' + key)
 
         'getting languages of a repo'
         languages = repository.get_languages()  # dict object (json? object)
@@ -161,5 +193,6 @@ if __name__ == "__main__":
 
         'handle here writing to output, dont make it at end when stack'
         'is full of repos, but do it a repo by repo...'
+        output_data(repo)
 
         scream.ssay('Finished processing repo: ' + key + '.. moving on... ')

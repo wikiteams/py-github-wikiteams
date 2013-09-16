@@ -15,10 +15,12 @@ class MyRepository():
         self.data = []
 
     repository_branches = None
+    repository_contributors = None
     repository_created_at = None
     repository_description = None
     repository_fork = None
     repository_forks = None
+    repository_forks_count = None
     repository_has_downloads = None
     repository_has_issues = None
     repository_has_wiki = None
@@ -47,11 +49,13 @@ class MyRepository():
     def getKey(self):
         return self.key
 
+    'basicly first init of data transcripted from input (csvs)'
+    'name with owner, and count of forks and watchers'
     def setInitials(self, name, owner, watchers, forks):
         self.repository_name = name
         self.repository_owner = owner
-        self.repository_watchers = watchers
-        self.repository_forks = forks
+        self.repository_watchers_count = watchers
+        self.repository_forks_count = forks
 
     def setName(self, name):
         self.repository_name = name
@@ -68,8 +72,23 @@ class MyRepository():
     def setForks(self, forks):
         self.repository_forks = forks
 
+    def getForks(self):
+        return self.repository_forks
+
+    def getForksCount(self):
+        return self.repository_forks_count
+
     def setWatchers(self, watchers):
         self.repository_watchers = watchers
+
+    def getWatchers(self):
+        return self.repository_watchers
+
+    def getWatchersCount(self):
+        return self.repository_watchers_count
+
+    def setContributors(self, contributors):
+        self.repository_contributors = contributors
 
     def setSubscribers(self, subscribers):
         self.repository_subscribers = subscribers
