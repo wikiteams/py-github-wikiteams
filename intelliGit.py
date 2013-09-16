@@ -35,7 +35,8 @@ def output_data(repo):
         tempv = (repo.getName(),
                  repo.getOwner(),
                  repo.getForksCount(),
-                 repo.getWatchersCount())
+                 repo.getWatchersCount(),
+                 repo.getContributorsCount())
         repowriter.writerow(tempv)
 
 

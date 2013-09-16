@@ -90,6 +90,9 @@ class MyRepository():
     def setContributors(self, contributors):
         self.repository_contributors = contributors
 
+    def getContributorsCount(self):
+        return len(self.repository_contributors)
+
     def setSubscribers(self, subscribers):
         self.repository_subscribers = subscribers
 
