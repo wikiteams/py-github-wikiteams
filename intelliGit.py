@@ -25,7 +25,7 @@ AUTH_WITH_TOKENS = False
 class MyDialect(csv.Dialect):
     strict = True
     skipinitialspace = True
-    quoting = csv.QUOTE_NONE
+    quoting = csv.QUOTE_MINIMAL
     delimiter = ','
     lineterminator = '\n'
 

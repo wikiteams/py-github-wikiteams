@@ -50,6 +50,9 @@ class MyRepository():
     def getKey(self):
         return self.key
 
+    def purge(self):
+        'TO DO: implement this method'
+
     'basicly first init of data transcripted from input (csvs)'
     'name with owner, and count of forks and watchers'
     def setInitials(self, name, owner, watchers, forks):
