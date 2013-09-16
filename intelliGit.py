@@ -36,7 +36,8 @@ def output_data(repo):
                  repo.getOwner(),
                  repo.getForksCount(),
                  repo.getWatchersCount(),
-                 repo.getContributorsCount())
+                 repo.getContributorsCount(),
+                 repo.getSubscribersCount())
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
@@ -56,6 +57,15 @@ def output_data(repo):
                      repo.getOwner(),
                      language)
             langwriter.writerow(tempv)
+
+    with open('subscribers.csv', 'ab') as output_csvfile:
+        scream.ssay('subscribers.csv opened for append..')
+        subscriberswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for subscriber in repo.getContributors():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     subscriber.login)
+            subscriberswriter.writerow(tempv)
 
 
 if __name__ == "__main__":
@@ -228,3 +238,8 @@ if __name__ == "__main__":
         del repos[key]
 
         scream.ssay('(' + key + ' deleted)')
+
+        limit = gh.get_rate_limit()
+
+        scream.ssay('Rate limit: ' + str(limit.rate.limit) +
+                    ' remaining: ' + str(limit.rate.remaining))
