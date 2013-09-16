@@ -135,6 +135,15 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
+        '2. Liczba commit'
+        commits = repository.get_commits()
+        repo_commits = []
+        for commit in commits:
+            repo_commits.append(commit)
+        repo.setCommits(repo_commits)
+        scream.log('Added commits of count: ' + str(len(repo_commits)) +
+                   ' to a repo ' + key)
+
         '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
         stargazers = repository.get_stargazers()
         repo_stargazers = []
@@ -197,3 +206,7 @@ if __name__ == "__main__":
         output_data(repo)
 
         scream.ssay('Finished processing repo: ' + key + '.. moving on... ')
+
+        del repos[key]
+
+        scream.ssay('(' + key + ' deleted)')
