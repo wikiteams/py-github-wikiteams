@@ -34,7 +34,8 @@ def make_headers():
     with open('repos.csv', 'ab') as output_csvfile:
         repowriter = csv.writer(output_csvfile, dialect=MyDialect)
         tempv = ('name', 'owner', 'forks_count', 'watchers_count',
-                 'contributors_count', 'subscribers_count', 'stargazers_count')
+                 'contributors_count', 'subscribers_count',
+                 'stargazers_count', 'labels_count')
         repowriter.writerow(tempv)
 
 
@@ -48,7 +49,8 @@ def output_data(repo):
                  repo.getWatchersCount(),
                  repo.getContributorsCount(),
                  repo.getSubscribersCount(),
-                 repo.getStargazersCount())
+                 repo.getStargazersCount(),
+                 repo.getLabelsCount())
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
@@ -77,6 +79,16 @@ def output_data(repo):
                      repo.getOwner(),
                      subscriber.login)
             subscriberswriter.writerow(tempv)
+
+    with open('labels.csv', 'ab') as output_csvfile:
+        scream.ssay('labels.csv opened for append..')
+        labelswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for label in repo.getLabels():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     label.name,
+                     label.color)
+            labelswriter.writerow(tempv)
 
 
 if __name__ == "__main__":

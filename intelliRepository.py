@@ -124,6 +124,12 @@ class MyRepository():
     def setLabels(self, labels):
         self.repository_labels = labels
 
+    def getLabels(self):
+        return self.repository_labels
+
+    def getLabelsCount(self):
+        return len(self.repository_labels)
+
     def setIssues(self, issues):
         self.repository_issues = issues
 
