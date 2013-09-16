@@ -39,6 +39,15 @@ def output_data(repo):
                  repo.getContributorsCount())
         repowriter.writerow(tempv)
 
+    with open('contributors.csv', 'ab') as output_csvfile:
+        scream.ssay('contributors.csv opened for append..')
+        contribwriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for contributor in repo.get_contributors():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     contributor.login)
+            contribwriter.writerow(tempv)
+
 
 if __name__ == "__main__":
     '''
