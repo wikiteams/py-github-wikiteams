@@ -19,6 +19,8 @@ file_names = ['by-forks-20028-33', 'by-forks-20028-44',
               'by-watchers-82-70']
 repos_reported_nonexist = []
 
+AUTH_WITH_TOKENS = False
+
 
 class MyDialect(csv.Dialect):
     strict = True
@@ -85,8 +87,15 @@ if __name__ == "__main__":
     scream.say('Start main execution')
     scream.say('Welcome to WikiTeams.pl GitHub repo getter!')
 
-    pass_string = open('pass.txt', 'r').read()
-    gh = Github('wikiteams', pass_string)
+    secrets = []
+    with open('pass.txt', 'r') as passfile:
+        for line in passfile:
+            secrets.append(line)
+    login_or_token__ = secrets[0]
+    pass_string = secrets[1]
+    client_id__ = secrets[2]
+    client_secret__ = secrets[3]
+    gh = Github(client_id=client_id__, client_secret=client_secret__) if AUTH_WITH_TOKENS else Github(login_or_token__, pass_string)
 
     is_gc_turned_on = 'turned on' if str(gc.isenabled()) else 'turned off'
     scream.ssay('Garbage collector is ' + is_gc_turned_on)
@@ -258,6 +267,6 @@ if __name__ == "__main__":
         scream.ssay('Rate limit: ' + str(limit.rate.limit) +
                     ' remaining: ' + str(limit.rate.remaining))
 
-        reset_time = gh.rate_limiting_resettime()
+        reset_time = gh.rate_limiting_resettime
 
-        scream.ssay('Rate limit reset time: ' + reset_time)
+        scream.ssay('Rate limit reset time: ' + str(reset_time))
