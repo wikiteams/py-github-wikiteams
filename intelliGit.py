@@ -28,6 +28,14 @@ class MyDialect(csv.Dialect):
     lineterminator = '\n'
 
 
+def make_headers():
+    with open('repos.csv', 'ab') as output_csvfile:
+        repowriter = csv.writer(output_csvfile, dialect=MyDialect)
+        tempv = ('name', 'owner', 'forks_count', 'watchers_count',
+                 'contributors_count', 'subscribers_count')
+        repowriter.writerow(tempv)
+
+
 def output_data(repo):
     with open('repos.csv', 'ab') as output_csvfile:
         scream.ssay('repos.csv opened for append..')
@@ -80,6 +88,8 @@ if __name__ == "__main__":
     gh = Github('wikiteams', pass_string)
 
     scream.ssay('Garbage collector is ' + str(gc.isenabled()))
+
+    make_headers()
 
     for filename in file_names:
         scream.say('------ WORKING WITH FILE : ' + filename)
