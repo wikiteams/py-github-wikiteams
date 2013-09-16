@@ -112,6 +112,12 @@ class MyRepository():
     def setStargazers(self, stargazers):
         self.repository_stargazers = stargazers
 
+    def getStargazers(self):
+        return self.repository_stargazers
+
+    def getStargazersCount(self):
+        return len(self.repository_stargazers)
+
     def setLanguage(self, languages):
         self.repository_language = languages
 

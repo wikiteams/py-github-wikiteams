@@ -32,7 +32,7 @@ def make_headers():
     with open('repos.csv', 'ab') as output_csvfile:
         repowriter = csv.writer(output_csvfile, dialect=MyDialect)
         tempv = ('name', 'owner', 'forks_count', 'watchers_count',
-                 'contributors_count', 'subscribers_count')
+                 'contributors_count', 'subscribers_count', 'stargazers_count')
         repowriter.writerow(tempv)
 
 
@@ -45,7 +45,8 @@ def output_data(repo):
                  repo.getForksCount(),
                  repo.getWatchersCount(),
                  repo.getContributorsCount(),
-                 repo.getSubscribersCount())
+                 repo.getSubscribersCount(),
+                 repo.getStargazersCount())
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
