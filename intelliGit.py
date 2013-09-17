@@ -12,6 +12,7 @@ from github import Github, UnknownObjectException, GithubException
 import csv
 import scream
 import gc
+import sys
 
 repos = dict()
 file_names = ['by-forks-20028-33', 'by-forks-20028-44',
@@ -197,7 +198,9 @@ if __name__ == "__main__":
 
     for filename in file_names:
         scream.say('------ WORKING WITH FILE : ' + filename)
-        with open('data\\' + filename + '.csv', 'rb') as source_csvfile:
+        filename_ = 'data/' if sys.platform == 'linux2' else 'data\\'
+        filename__ = filename_ + filename + '.csv'
+        with open(filename__, 'rb') as source_csvfile:
             reposReader = csv.reader(source_csvfile,
                                      delimiter=',')
             reposReader.next()
