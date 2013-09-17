@@ -27,6 +27,7 @@ class MyDialect(csv.Dialect):
     skipinitialspace = True
     quoting = csv.QUOTE_MINIMAL
     delimiter = ','
+    quotechar = '"'
     lineterminator = '\n'
 
 
@@ -35,13 +36,13 @@ def make_headers():
         repowriter = csv.writer(output_csvfile, dialect=MyDialect)
         tempv = ('name', 'owner', 'forks_count', 'watchers_count',
                  'contributors_count', 'subscribers_count',
-                 'stargazers_count', 'labels_count')
+                 'stargazers_count', 'labels_count', 'commits_count')
         repowriter.writerow(tempv)
 
 
 def output_commit_comments(commit_comments, sha):
     with open('commit_comments.csv', 'ab') as output_csvfile:
-        scream.ssay('commit_comments.csv opened for append..')
+        scream.log('commit_comments.csv opened for append..')
         ccomentswriter = csv.writer(output_csvfile, dialect=MyDialect)
         for comment in commit_comments:
             tempv = (repo.getName(),
@@ -58,7 +59,7 @@ def output_commit_comments(commit_comments, sha):
 
 def output_commit_statuses(commit_statuses, sha):
     with open('commit_statuses.csv', 'ab') as output_csvfile:
-        scream.ssay('commit_statuses.csv opened for append..')
+        scream.log('commit_statuses.csv opened for append..')
         cstatuswriter = csv.writer(output_csvfile, dialect=MyDialect)
         for status in commit_statuses:
             tempv = (repo.getName(),
@@ -81,7 +82,8 @@ def output_data(repo):
                  repo.getContributorsCount(),
                  repo.getSubscribersCount(),
                  repo.getStargazersCount(),
-                 repo.getLabelsCount())
+                 repo.getLabelsCount(),
+                 repo.getCommitsCount())
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
@@ -101,7 +103,7 @@ def output_data(repo):
                      repo.getOwner(),
                      commit.sha,
                      commit.author.login,
-                     commit.commiter.login)
+                     commit.committer.login)
             commitswriter.writerow(tempv)
 
     with open('languages.csv', 'ab') as output_csvfile:
@@ -222,6 +224,7 @@ if __name__ == "__main__":
             repos_reported_nonexist.append(key)
             continue
 
+        scream.ssay('Checking size of a team')
         '1. Rozmiar zespolu'
         contributors = repository.get_contributors()
         repo_contributors = []
@@ -234,11 +237,12 @@ if __name__ == "__main__":
                    str(len(repo_contributors)) +
                    ' to a repo ' + key)
 
-        'getting languages of a repo'
+        scream.ssay('Getting languages of a repo')
         languages = repository.get_languages()  # dict object (json? object)
         repo.setLanguage(languages)
         scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
 
+        scream.ssay('Getting labels of a repo')
         'getting labels, label is a tag which you can put in an issue'
         try:
             labels = repository.get_labels()  # github.Label object
@@ -255,6 +259,7 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
+        scream.ssay('Getting commits of a repo')
         '2. Liczba commit'
         commits = repository.get_commits()
         repo_commits = []
@@ -280,6 +285,7 @@ if __name__ == "__main__":
         'of a function for getting skill stats in a commit'
         'TO DO: implement a workaround with BEAUTIFUL SOUP'
 
+        scream.ssay('Getting stargazers of a repo')
         '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
         stargazers = repository.get_stargazers()
         repo_stargazers = []
@@ -289,6 +295,7 @@ if __name__ == "__main__":
         scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
                    ' to a repo ' + key)
 
+        scream.ssay('Getting issues of a repo')
         '6. Liczba Issues w poszczegolnych typach'
         try:
             issues = repository.get_issues()
@@ -305,6 +312,7 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
+        scream.ssay('Getting pull requests of a repo')
         '10. Liczba Pull Requests'
         '11. Liczba zaakceptowanych Pull Requests'
         pulls = repository.get_pulls()
@@ -315,6 +323,7 @@ if __name__ == "__main__":
         scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
                    ' to a repo ' + key)
 
+        scream.ssay('Getting branches of a repo')
         'getting repo branches'
         '13. Liczba Branch'
         branches = repository.get_branches()
@@ -325,6 +334,7 @@ if __name__ == "__main__":
         scream.log('Added branches of count: ' + str(len(repo_branches)) +
                    ' to a repo ' + key)
 
+        scream.ssay('Getting subscribers of a repo')
         'get subscribers'
         subscribers = repository.get_subscribers()
         repo_subscribers = []
