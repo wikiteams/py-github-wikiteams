@@ -53,7 +53,9 @@ def output_commit_comments(commit_comments, sha):
                      comment.created_at,
                      comment.id,
                      comment.line,
-                     comment.path)
+                     comment.path,
+                     comment.position,
+                     comment.updated_at)
             ccomentswriter.writerow(tempv)
 
 
@@ -65,10 +67,26 @@ def output_commit_statuses(commit_statuses, sha):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      sha,
-                     status.additions,
-                     status.deletions,
-                     status.total)
+                     status.created_at,
+                     status.creator.login,
+                     status.description,
+                     status.id,
+                     status.state,
+                     status.updated_at)
             cstatuswriter.writerow(tempv)
+
+
+def output_commit_stats(commit_stats, sha):
+    with open('commit_stats.csv', 'ab') as output_csvfile:
+        scream.log('commit_stats.csv opened for append..')
+        cstatswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        tempv = (repo.getName(),
+                 repo.getOwner(),
+                 sha,
+                 commit_stats.additions,
+                 commit_stats.deletions,
+                 commit_stats.total)
+        cstatswriter.writerow(tempv)
 
 
 def output_data(repo):
@@ -103,7 +121,9 @@ def output_data(repo):
                      repo.getOwner(),
                      commit.sha,
                      commit.author.login,
-                     commit.committer.login)
+                     commit.committer.login,
+                     commit.url,
+                     commit.html_url)
             commitswriter.writerow(tempv)
 
     with open('languages.csv', 'ab') as output_csvfile:
@@ -276,6 +296,7 @@ if __name__ == "__main__":
             'IMHO output to CSV already here...'
             output_commit_comments(commit_comments, commit.sha)
             output_commit_statuses(commit_statuses, commit.sha)
+            output_commit_stats(commit.stats, commit.sha)
         repo.setCommits(repo_commits)
         scream.log('Added commits of count: ' + str(len(repo_commits)) +
                    ' to a repo ' + key)
