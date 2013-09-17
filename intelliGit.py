@@ -39,6 +39,37 @@ def make_headers():
         repowriter.writerow(tempv)
 
 
+def output_commit_comments(commit_comments, sha):
+    with open('commit_comments.csv', 'ab') as output_csvfile:
+        scream.ssay('commit_comments.csv opened for append..')
+        ccomentswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for comment in commit_comments:
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     sha,
+                     comment.body,
+                     comment.commit_id,
+                     comment.created_at,
+                     comment.id,
+                     comment.line,
+                     comment.path)
+            ccomentswriter.writerow(tempv)
+
+
+def output_commit_statuses(commit_statuses, sha):
+    with open('commit_statuses.csv', 'ab') as output_csvfile:
+        scream.ssay('commit_statuses.csv opened for append..')
+        cstatuswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for status in commit_statuses:
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     sha,
+                     status.additions,
+                     status.deletions,
+                     status.total)
+            cstatuswriter.writerow(tempv)
+
+
 def output_data(repo):
     with open('repos.csv', 'ab') as output_csvfile:
         scream.ssay('repos.csv opened for append..')
@@ -218,9 +249,25 @@ if __name__ == "__main__":
         repo_commits = []
         for commit in commits:
             repo_commits.append(commit)
+            comments = commit.get_comments()
+            commit_comments = []
+            for comment in comments:
+                commit_comments.append(comment)
+            statuses = commit.get_statuses()
+            commit_statuses = []
+            for status in statuses:
+                commit_statuses.append(status)
+            'IMHO output to CSV already here...'
+            output_commit_comments(commit_comments, commit.sha)
+            output_commit_statuses(commit_statuses, commit.sha)
         repo.setCommits(repo_commits)
         scream.log('Added commits of count: ' + str(len(repo_commits)) +
                    ' to a repo ' + key)
+
+        '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
+        'there is no evidence for existance in GitHub API'
+        'of a function for getting skill stats in a commit'
+        'TO DO: implement a workaround with BEAUTIFUL SOUP'
 
         '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
         stargazers = repository.get_stargazers()
