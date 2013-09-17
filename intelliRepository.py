@@ -79,6 +79,12 @@ class MyRepository():
     def setCommits(self, commits):
         self.repository_commits = commits
 
+    def getCommits(self):
+        return self.repository_commits
+
+    def getCommitsCount(self):
+        return len(self.repository_commits)
+
     def getForks(self):
         return self.repository_forks
 

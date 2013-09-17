@@ -93,6 +93,17 @@ def output_data(repo):
                      contributor.login)
             contribwriter.writerow(tempv)
 
+    with open('commits.csv', 'ab') as output_csvfile:
+        scream.ssay('commits.csv opened for append..')
+        commitswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        for commit in repo.getCommits():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     commit.sha,
+                     commit.author.login,
+                     commit.commiter.login)
+            commitswriter.writerow(tempv)
+
     with open('languages.csv', 'ab') as output_csvfile:
         scream.ssay('languages.csv opened for append..')
         langwriter = csv.writer(output_csvfile, dialect=MyDialect)
