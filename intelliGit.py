@@ -15,6 +15,13 @@ import gc
 import sys
 
 repos = dict()
+
+'''
+Explanation of an input data, theye are CSV file with data
+retrieved from Google BigQuery consisted of repo name, owner
+and sorted by number of forks and watchers, for analysis we
+take around 32k biggest GitHub repositories
+'''
 file_names = ['by-forks-20028-33', 'by-forks-20028-44',
               'by-watchers-3391-118', 'by-watchers-129-82',
               'by-watchers-82-70']
@@ -69,7 +76,7 @@ def output_commit_statuses(commit_statuses, sha):
                      repo.getOwner(),
                      sha,
                      status.created_at,
-                     status.creator.login,
+                     (status.creator.login if status.creator is not None else ''),
                      status.description,
                      status.id,
                      status.state,
@@ -121,8 +128,8 @@ def output_data(repo):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      commit.sha,
-                     commit.author.login,
-                     commit.committer.login,
+                     (commit.author.login if commit.author is not None else ''),
+                     (commit.committer.login if commit.committer is not None else ''),
                      commit.url,
                      commit.html_url)
             commitswriter.writerow(tempv)
@@ -161,6 +168,10 @@ def output_data(repo):
         for issue in repo.getIssues():
             tempv = (repo.getName(),
                      repo.getOwner(),
+                     (issue.assigne.login if issue.assigne is not None else ''),
+                     issue.body,
+                     issue.closed_at,
+                     (issue.closed_by.login if issue.closed_by is not None else ''),
                      issue.id,
                      issue.number,
                      issue.title)
