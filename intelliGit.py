@@ -5,6 +5,8 @@ Dont fork without good reason, use clone instead
 
 @since 1.1
 @author Oskar Jarczyk
+
+@update 17.09.2013
 '''
 
 from intelliRepository import MyRepository
@@ -168,7 +170,7 @@ def output_data(repo):
         for issue in repo.getIssues():
             tempv = (repo.getName(),
                      repo.getOwner(),
-                     (issue.assigne.login if issue.assigne is not None else ''),
+                     (issue.assignee.login if issue.assignee is not None else ''),
                      issue.body,
                      issue.closed_at,
                      (issue.closed_by.login if issue.closed_by is not None else ''),
