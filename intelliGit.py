@@ -9,6 +9,8 @@ Dont fork without good reason, use clone instead
 @update 18.09.2013
 '''
 
+version_name = '1.2 september'
+
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
 import csv
@@ -40,6 +42,7 @@ class MyDialect(csv.Dialect):
     skipinitialspace = True
     quoting = csv.QUOTE_MINIMAL
     delimiter = ','
+    escapechar = '\\'
     quotechar = '"'
     lineterminator = '\n'
 
@@ -269,6 +272,41 @@ def output_data(repo):
                      (issue.title if issue.title is not None else ''))
             issueswriter.writerow(tempv)
 
+    with open('pulls.csv', 'ab') as output_csvfile:
+        scream.ssay('pulls.csv opened for append..')
+        pullswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        for pull in repo.getPulls():
+            tempv = (repo.getName(),
+                     repo.getOwner(),
+                     str(pull.additions),  # is always int
+                     (pull.assignee.login if pull.assignee is not None else ''),
+                     (pull.body if pull.body is not None else ''),
+                     str(pull.changed_files),  # is always int
+                     (str(pull.closed_at) if pull.closed_at is not None else ''),
+                     str(pull.comments),  # is always int
+                     pull.comments_url,
+                     (str(pull.created_at) if pull.created_at is not None else ''),
+                     str(pull.deletions),  # is always int
+                     pull.diff_url,
+                     pull.html_url,
+                     str(pull.id),  # is always int
+                     pull.issue_url,
+                     pull.merge_commit_sha,
+                     str(pull.mergeable),  # is always boolean
+                     pull.mergeable_state,
+                     str(pull.merged),  # is always boolean
+                     (str(pull.merged_at) if pull.merged_at is not None else ''),
+                     str(pull.number),
+                     pull.patch_url,
+                     pull.review_comment_url,
+                     str(pull.review_comments),  # is always int
+                     pull.review_comments_url,
+                     pull.state,
+                     pull.title,
+                     (str(pull.updated_at) if pull.updated_at is not None else ''),
+                     (pull.user.login if pull.user is not None else ''))
+            pullswriter.writerow(tempv)
+
 
 if __name__ == "__main__":
     '''
@@ -277,6 +315,7 @@ if __name__ == "__main__":
     '''
     scream.say('Start main execution')
     scream.say('Welcome to WikiTeams.pl GitHub repo getter!')
+    scream.say(version_name)
 
     secrets = []
     with open('pass.txt', 'r') as passfile:

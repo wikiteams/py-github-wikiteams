@@ -154,5 +154,11 @@ class MyRepository():
     def setPulls(self, pulls):
         self.repository_pulls = pulls
 
+    def getPulls(self):
+        return self.repository_pulls
+
+    def getPullsCount(self):
+        return len(self.repository_pulls)
+
     def getLanguages(self):
         return self.repository_language
