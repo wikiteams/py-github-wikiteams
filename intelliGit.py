@@ -120,17 +120,21 @@ def output_commit_comments(commit_comments, sha):
         scream.log('commit_comments.csv opened for append..')
         ccomentswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for comment in commit_comments:
+            assert type(comment.id) == int
+            assert type(comment.position) == int
+            assert type(comment.line) == int
+            scream.log(str(comment.commit_id))
             tempv = (repo.getName(),
                      repo.getOwner(),
                      sha,
-                     comment.body,
-                     comment.commit_id,
-                     comment.created_at,
-                     comment.id,
-                     comment.line,
+                     (comment.body.strip('\r').strip('\n') if comment.body is not None else ''),
+                     str(comment.commit_id),  # logged above
+                     (str(comment.created_at) if comment.created_at is not None else ''),
+                     str(comment.id),  # this is always int
+                     str(comment.line),  # this is always int
                      comment.path,
-                     comment.position,
-                     comment.updated_at)
+                     str(comment.position),  # this is always int
+                     (str(comment.updated_at) if comment.updated_at is not None else ''))
             ccomentswriter.writerow(tempv)
 
 
@@ -257,7 +261,7 @@ def output_data(repo):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      (issue.assignee.login if issue.assignee is not None else ''),
-                     (issue.body if issue.body is not None else ''),
+                     (issue.body.strip('\r').strip('\n') if issue.body is not None else ''),
                      (issue.closed_at if issue.closed_at is not None else ''),
                      (issue.closed_by.login if issue.closed_by is not None else ''),
                      str(issue.id),
