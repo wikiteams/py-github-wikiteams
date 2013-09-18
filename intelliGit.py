@@ -3,10 +3,10 @@ WikiTeams.pl top 32000 repos dataset creator
 Please keep this file with PEP8 standard
 Dont fork without good reason, use clone instead
 
-@since 1.1
+@since 1.2
 @author Oskar Jarczyk
 
-@update 17.09.2013
+@update 18.09.2013
 '''
 
 from intelliRepository import MyRepository
@@ -15,6 +15,8 @@ import csv
 import scream
 import gc
 import sys
+import codecs
+import cStringIO
 
 repos = dict()
 
@@ -30,6 +32,7 @@ file_names = ['by-forks-20028-33', 'by-forks-20028-44',
 repos_reported_nonexist = []
 
 AUTH_WITH_TOKENS = False
+USE_UTF8 = True
 
 
 class MyDialect(csv.Dialect):
@@ -41,9 +44,71 @@ class MyDialect(csv.Dialect):
     lineterminator = '\n'
 
 
+class UTF8Recoder:
+    """
+    Iterator that reads an encoded stream and reencodes the input to UTF-8
+    """
+    def __init__(self, f, encoding):
+        self.reader = codecs.getreader(encoding)(f)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.reader.next().encode("utf-8")
+
+
+class UnicodeReader:
+    """
+    A CSV reader which will iterate over lines in the CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
+        f = UTF8Recoder(f, encoding)
+        self.reader = csv.reader(f, dialect=dialect, **kwds)
+
+    def next(self):
+        row = self.reader.next()
+        return [unicode(s, "utf-8") for s in row]
+
+    def __iter__(self):
+        return self
+
+
+class UnicodeWriter:
+    """
+    A CSV writer which will write rows to CSV file "f",
+    which is encoded in the given encoding.
+    """
+
+    def __init__(self, f, dialect=MyDialect, encoding="utf-8", **kwds):
+        # Redirect output to a queue
+        self.queue = cStringIO.StringIO()
+        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
+        self.stream = f
+        self.encoder = codecs.getincrementalencoder(encoding)()
+
+    def writerow(self, row):
+        self.writer.writerow([s.encode("utf-8") for s in row])
+        # Fetch UTF-8 output from the queue ...
+        data = self.queue.getvalue()
+        data = data.decode("utf-8")
+        # ... and reencode it into the target encoding
+        data = self.encoder.encode(data)
+        # write to the target stream
+        self.stream.write(data)
+        # empty queue
+        self.queue.truncate(0)
+
+    def writerows(self, rows):
+        for row in rows:
+            self.writerow(row)
+
+
 def make_headers():
     with open('repos.csv', 'ab') as output_csvfile:
-        repowriter = csv.writer(output_csvfile, dialect=MyDialect)
+        repowriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         tempv = ('name', 'owner', 'forks_count', 'watchers_count',
                  'contributors_count', 'subscribers_count',
                  'stargazers_count', 'labels_count', 'commits_count')
@@ -53,7 +118,7 @@ def make_headers():
 def output_commit_comments(commit_comments, sha):
     with open('commit_comments.csv', 'ab') as output_csvfile:
         scream.log('commit_comments.csv opened for append..')
-        ccomentswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        ccomentswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for comment in commit_comments:
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -72,7 +137,7 @@ def output_commit_comments(commit_comments, sha):
 def output_commit_statuses(commit_statuses, sha):
     with open('commit_statuses.csv', 'ab') as output_csvfile:
         scream.log('commit_statuses.csv opened for append..')
-        cstatuswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        cstatuswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for status in commit_statuses:
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -89,34 +154,53 @@ def output_commit_statuses(commit_statuses, sha):
 def output_commit_stats(commit_stats, sha):
     with open('commit_stats.csv', 'ab') as output_csvfile:
         scream.log('commit_stats.csv opened for append..')
-        cstatswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        cstatswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        assert type(commit_stats.additions) == int
+        assert type(commit_stats.deletions) == int
+        assert type(commit_stats.total) == int
         tempv = (repo.getName(),
                  repo.getOwner(),
                  sha,
-                 commit_stats.additions,
-                 commit_stats.deletions,
-                 commit_stats.total)
+                 str(commit_stats.additions),  # this is always int ! str() allowed
+                 str(commit_stats.deletions),  # this is always int ! str() allowed
+                 str(commit_stats.total))  # this is always int ! str() allowed
         cstatswriter.writerow(tempv)
 
 
 def output_data(repo):
     with open('repos.csv', 'ab') as output_csvfile:
         scream.ssay('repos.csv opened for append..')
-        repowriter = csv.writer(output_csvfile, dialect=MyDialect)
+        repowriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+
+        rfc = repo.getForksCount()
+        rwc = repo.getWatchersCount()
+        rcc = repo.getContributorsCount()
+        rsc = repo.getSubscribersCount()
+        rstc = repo.getStargazersCount()
+        rlc = repo.getLabelsCount()
+        rcmc = repo.getCommitsCount()
+        assert rfc.isdigit()
+        assert rwc.isdigit()
+        assert type(rcc) == int
+        assert type(rsc) == int
+        assert type(rstc) == int
+        assert type(rlc) == int
+        assert type(rcmc) == int
+
         tempv = (repo.getName(),
                  repo.getOwner(),
-                 repo.getForksCount(),
-                 repo.getWatchersCount(),
-                 repo.getContributorsCount(),
-                 repo.getSubscribersCount(),
-                 repo.getStargazersCount(),
-                 repo.getLabelsCount(),
-                 repo.getCommitsCount())
+                 str(rfc),  # this is always string representation of number ! str() allowed
+                 str(rwc),  # this is always string representation of number ! str() allowed
+                 str(rcc),  # this is always int ! str() allowed
+                 str(rsc),  # this is always int ! str() allowed
+                 str(rstc),  # this is always int ! str() allowed
+                 str(rlc),  # this is always int ! str() allowed
+                 str(rcmc))  # this is always int ! str() allowed
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
         scream.ssay('contributors.csv opened for append..')
-        contribwriter = csv.writer(output_csvfile, dialect=MyDialect)
+        contribwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for contributor in repo.getContributors():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -125,7 +209,7 @@ def output_data(repo):
 
     with open('commits.csv', 'ab') as output_csvfile:
         scream.ssay('commits.csv opened for append..')
-        commitswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        commitswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for commit in repo.getCommits():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -138,7 +222,7 @@ def output_data(repo):
 
     with open('languages.csv', 'ab') as output_csvfile:
         scream.ssay('languages.csv opened for append..')
-        langwriter = csv.writer(output_csvfile, dialect=MyDialect)
+        langwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for language in repo.getLanguages():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -147,7 +231,7 @@ def output_data(repo):
 
     with open('subscribers.csv', 'ab') as output_csvfile:
         scream.ssay('subscribers.csv opened for append..')
-        subscriberswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        subscriberswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for subscriber in repo.getContributors():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -156,7 +240,7 @@ def output_data(repo):
 
     with open('labels.csv', 'ab') as output_csvfile:
         scream.ssay('labels.csv opened for append..')
-        labelswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        labelswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for label in repo.getLabels():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -166,17 +250,19 @@ def output_data(repo):
 
     with open('issues.csv', 'ab') as output_csvfile:
         scream.ssay('issues.csv opened for append..')
-        issueswriter = csv.writer(output_csvfile, dialect=MyDialect)
+        issueswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for issue in repo.getIssues():
+            assert type(issue.id) == int
+            assert type(issue.number) == int
             tempv = (repo.getName(),
                      repo.getOwner(),
                      (issue.assignee.login if issue.assignee is not None else ''),
-                     issue.body,
-                     issue.closed_at,
+                     (issue.body if issue.body is not None else ''),
+                     (issue.closed_at if issue.closed_at is not None else ''),
                      (issue.closed_by.login if issue.closed_by is not None else ''),
-                     issue.id,
-                     issue.number,
-                     issue.title)
+                     str(issue.id),
+                     str(issue.number),
+                     (issue.title if issue.title is not None else ''))
             issueswriter.writerow(tempv)
 
 
