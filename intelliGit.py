@@ -131,12 +131,12 @@ def output_commit_comments(commit_comments, sha):
                      repo.getOwner(),
                      sha,
                      (comment.body.strip('\r').strip('\n') if comment.body is not None else ''),
-                     str(comment.commit_id),  # logged above
+                     (str(comment.commit_id) if comment.commit_id is not None else ''),  # logged above
                      (str(comment.created_at) if comment.created_at is not None else ''),
-                     str(comment.id),  # this is always int
-                     str(comment.line),  # this is always int
-                     comment.path,
-                     str(comment.position),  # this is always int
+                     (str(comment.id) if comment.id is not None else ''),  # this is always int
+                     (str(comment.line) if comment.line is not None else ''),  # this is always int
+                     (comment.path if comment.path is not None else ''),
+                     (str(comment.position) if comment.position is not None else ''),  # this is always int
                      (str(comment.updated_at) if comment.updated_at is not None else ''))
             ccomentswriter.writerow(tempv)
 
@@ -149,12 +149,12 @@ def output_commit_statuses(commit_statuses, sha):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      sha,
-                     status.created_at,
+                     (str(status.created_at) if status.created_at is not None else ''),
                      (status.creator.login if status.creator is not None else ''),
-                     status.description,
-                     status.id,
-                     status.state,
-                     status.updated_at)
+                     (status.description if status.description is not None else ''),
+                     (str(status.id) if status.id is not None else ''),
+                     (status.state if status.state is not None else ''),
+                     (str(status.updated_at) if status.updated_at is not None else ''))
             cstatuswriter.writerow(tempv)
 
 
@@ -168,9 +168,9 @@ def output_commit_stats(commit_stats, sha):
         tempv = (repo.getName(),
                  repo.getOwner(),
                  sha,
-                 str(commit_stats.additions),  # this is always int ! str() allowed
-                 str(commit_stats.deletions),  # this is always int ! str() allowed
-                 str(commit_stats.total))  # this is always int ! str() allowed
+                 (str(commit_stats.additions) if commit_stats.additions is not None else ''),  # this is always int ! str() allowed
+                 (str(commit_stats.deletions) if commit_stats.deletions is not None else ''),  # this is always int ! str() allowed
+                 (str(commit_stats.total) if commit_stats.total is not None else ''))  # this is always int ! str() allowed
         cstatswriter.writerow(tempv)
 
 
@@ -186,6 +186,7 @@ def output_data(repo):
         rstc = repo.getStargazersCount()
         rlc = repo.getLabelsCount()
         rcmc = repo.getCommitsCount()
+        rpc = repo.getPullsCount()
         assert rfc.isdigit()
         assert rwc.isdigit()
         assert type(rcc) == int
@@ -193,6 +194,7 @@ def output_data(repo):
         assert type(rstc) == int
         assert type(rlc) == int
         assert type(rcmc) == int
+        assert type(rpc) == int
 
         tempv = (repo.getName(),
                  repo.getOwner(),
@@ -202,7 +204,8 @@ def output_data(repo):
                  str(rsc),  # this is always int ! str() allowed
                  str(rstc),  # this is always int ! str() allowed
                  str(rlc),  # this is always int ! str() allowed
-                 str(rcmc))  # this is always int ! str() allowed
+                 str(rcmc),  # this is always int ! str() allowed
+                 str(rpc))  # this is always int ! str() allowed
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
