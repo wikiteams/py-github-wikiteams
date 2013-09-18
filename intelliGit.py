@@ -380,17 +380,22 @@ if __name__ == "__main__":
     scream.say('Finished creating dictionary, size of dict is: ' +
                str(len(repos)))
 
+    iteration_step_count = 0
+
     for key in repos:
         repo = repos[key]
 
         try:
             repository = gh.get_repo(repo.getKey())
         except UnknownObjectException as e:
-            scream.log('Repo with key + ' + key +
+            scream.log_warning('Repo with key + ' + key +
                        ' not found, error({0}): {1}'.
                        format(e.status, e.data))
             repos_reported_nonexist.append(key)
             continue
+
+        iteration_step_count += 1
+        scream.ssay('Step no ' + str(iteration_step_count) + '. Working on a repo: ' + key)
 
         scream.ssay('Checking size of a team')
         '1. Rozmiar zespolu'
@@ -421,7 +426,9 @@ if __name__ == "__main__":
             scream.log('Added labels of count: ' + str(len(repo_labels)) +
                        ' to a repo ' + key)
         except GithubException as e:
-            scream.log('Repo didnt gave any labels, or paginated through' +
+            if 'repo_labels' not in locals():
+                repo.setLabels([])
+            scream.log_error('Repo didnt gave any labels, or paginated through' +
                        ' labels gave error. Issues are disabled for this' +
                        ' repo? + ' + key +
                        ', error({0}): {1}'.
@@ -429,25 +436,33 @@ if __name__ == "__main__":
 
         scream.ssay('Getting commits of a repo')
         '2. Liczba commit'
-        commits = repository.get_commits()
-        repo_commits = []
-        for commit in commits:
-            repo_commits.append(commit)
-            comments = commit.get_comments()
-            commit_comments = []
-            for comment in comments:
-                commit_comments.append(comment)
-            statuses = commit.get_statuses()
-            commit_statuses = []
-            for status in statuses:
-                commit_statuses.append(status)
-            'IMHO output to CSV already here...'
-            output_commit_comments(commit_comments, commit.sha)
-            output_commit_statuses(commit_statuses, commit.sha)
-            output_commit_stats(commit.stats, commit.sha)
-        repo.setCommits(repo_commits)
-        scream.log('Added commits of count: ' + str(len(repo_commits)) +
-                   ' to a repo ' + key)
+        try:
+            commits = repository.get_commits()
+            repo_commits = []
+            for commit in commits:
+                repo_commits.append(commit)
+                comments = commit.get_comments()
+                commit_comments = []
+                for comment in comments:
+                    commit_comments.append(comment)
+                statuses = commit.get_statuses()
+                commit_statuses = []
+                for status in statuses:
+                    commit_statuses.append(status)
+                'IMHO output to CSV already here...'
+                output_commit_comments(commit_comments, commit.sha)
+                output_commit_statuses(commit_statuses, commit.sha)
+                output_commit_stats(commit.stats, commit.sha)
+            repo.setCommits(repo_commits)
+            scream.log('Added commits of count: ' + str(len(repo_commits)) +
+                       ' to a repo ' + key)
+        except GithubException as e:
+            if 'repo_commits' not in locals():
+                repo.setCommits([])
+            scream.log_error('Paginating through comments, comment comments or statuses' +
+                       ' gave error. Try again? ' + key +
+                       ', error({0}): {1}'.
+                       format(e.status, e.data))
 
         '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
         'there is no evidence for existance in GitHub API'
