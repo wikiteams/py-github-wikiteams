@@ -123,9 +123,9 @@ def output_commit_comments(commit_comments, sha):
         scream.log('commit_comments.csv opened for append..')
         ccomentswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for comment in commit_comments:
-            assert type(comment.id) == int
-            assert type(comment.position) == int
-            assert type(comment.line) == int
+            assert (type(comment.id) == int or comment.id is None)
+            assert (type(comment.position) == int or comment.position is None)
+            assert (type(comment.line) == int or comment.line is None)
             scream.log(str(comment.commit_id))
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -162,9 +162,9 @@ def output_commit_stats(commit_stats, sha):
     with open('commit_stats.csv', 'ab') as output_csvfile:
         scream.log('commit_stats.csv opened for append..')
         cstatswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        assert type(commit_stats.additions) == int
-        assert type(commit_stats.deletions) == int
-        assert type(commit_stats.total) == int
+        assert (type(commit_stats.additions) == int or commit_stats.additions is None)
+        assert (type(commit_stats.deletions) == int or commit_stats.deletions is None)
+        assert (type(commit_stats.total) == int or commit_stats.total is None)
         tempv = (repo.getName(),
                  repo.getOwner(),
                  sha,
@@ -262,8 +262,8 @@ def output_data(repo):
         scream.ssay('issues.csv opened for append..')
         issueswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
         for issue in repo.getIssues():
-            assert type(issue.id) == int
-            assert type(issue.number) == int
+            assert (type(issue.id) == int or issue.id is None)
+            assert (type(issue.number) == int or issue.number is None)
             tempv = (repo.getName(),
                      repo.getOwner(),
                      (issue.assignee.login if issue.assignee is not None else ''),
