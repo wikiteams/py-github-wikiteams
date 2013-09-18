@@ -9,7 +9,7 @@ Dont fork without good reason, use clone instead
 @update 18.09.2013
 '''
 
-version_name = '1.2 september'
+version_name = 'version 1.2 codename: september'
 
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException

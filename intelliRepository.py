@@ -83,7 +83,7 @@ class MyRepository():
         return self.repository_commits
 
     def getCommitsCount(self):
-        return len(self.repository_commits)
+        return (len(self.repository_commits) if self.repository_commits is not None else 0)
 
     def getForks(self):
         return self.repository_forks
@@ -107,7 +107,7 @@ class MyRepository():
         return self.repository_contributors
 
     def getContributorsCount(self):
-        return len(self.repository_contributors)
+        return (len(self.repository_contributors) if self.repository_contributors is not None else 0)
 
     def setSubscribers(self, subscribers):
         self.repository_subscribers = subscribers
@@ -116,7 +116,7 @@ class MyRepository():
         return self.repository_subscribers
 
     def getSubscribersCount(self):
-        return len(self.repository_subscribers)
+        return (len(self.repository_subscribers) if self.repository_subscribers is not None else 0)
 
     def setStargazers(self, stargazers):
         self.repository_stargazers = stargazers
@@ -125,7 +125,7 @@ class MyRepository():
         return self.repository_stargazers
 
     def getStargazersCount(self):
-        return len(self.repository_stargazers)
+        return (len(self.repository_stargazers) if self.repository_stargazers is not None else 0)
 
     def setLanguage(self, languages):
         self.repository_language = languages
@@ -137,7 +137,7 @@ class MyRepository():
         return self.repository_labels
 
     def getLabelsCount(self):
-        return len(self.repository_labels)
+        return (len(self.repository_labels) if self.repository_labels is not None else 0)
 
     def setIssues(self, issues):
         self.repository_issues = issues
@@ -146,7 +146,7 @@ class MyRepository():
         return self.repository_issues
 
     def getIssuesCount(self):
-        return len(self.repository_issues)
+        return (len(self.repository_issues) if self.repository_issues is not None else 0)
 
     def setBranches(self, branches):
         self.repository_branches = branches
@@ -158,7 +158,7 @@ class MyRepository():
         return self.repository_pulls
 
     def getPullsCount(self):
-        return len(self.repository_pulls)
+        return (len(self.repository_pulls) if self.repository_pulls is not None else 0)
 
     def getLanguages(self):
         return self.repository_language
