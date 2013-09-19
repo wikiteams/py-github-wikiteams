@@ -428,6 +428,8 @@ if __name__ == "__main__":
         except GithubException as e:
             if 'repo_labels' not in locals():
                 repo.setLabels([])
+            else:
+                repo.setLabels(repo_labels)
             scream.log_error('Repo didnt gave any labels, or paginated through' +
                        ' labels gave error. Issues are disabled for this' +
                        ' repo? + ' + key +
