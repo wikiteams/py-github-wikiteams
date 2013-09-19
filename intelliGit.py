@@ -239,41 +239,57 @@ def output_data(repo):
                      language)
             langwriter.writerow(tempv)
 
-    with open('subscribers.csv', 'ab') as output_csvfile:
-        scream.ssay('subscribers.csv opened for append..')
-        subscriberswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        for subscriber in repo.getContributors():
-            tempv = (repo.getName(),
-                     repo.getOwner(),
-                     subscriber.login)
-            subscriberswriter.writerow(tempv)
+    if repo.getSubscribers() is not None:
+        with open('subscribers.csv', 'ab') as output_csvfile:
+            scream.ssay('subscribers.csv opened for append..')
+            subscriberswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            for subscriber in repo.getContributors():
+                tempv = (repo.getName(),
+                         repo.getOwner(),
+                         subscriber.login,
+                         subscriber.bio,
+                         subscriber.blog,
+                         str(subscriber.collaborators),
+                         subscriber.company,
+                         str(subscriber.contributions),
+                         str(subscriber.followers),
+                         str(subscriber.following))
+                subscriberswriter.writerow(tempv)
+    else:
+        scream.log_warning('Repo ' + repo.getName() + ' has no subscribers[]')
 
-    with open('labels.csv', 'ab') as output_csvfile:
-        scream.ssay('labels.csv opened for append..')
-        labelswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        for label in repo.getLabels():
-            tempv = (repo.getName(),
-                     repo.getOwner(),
-                     label.name,
-                     label.color)
-            labelswriter.writerow(tempv)
+    if repo.getLabels() is not None:
+        with open('labels.csv', 'ab') as output_csvfile:
+            scream.ssay('labels.csv opened for append..')
+            labelswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            for label in repo.getLabels():
+                tempv = (repo.getName(),
+                         repo.getOwner(),
+                         label.name,
+                         label.color)
+                labelswriter.writerow(tempv)
+    else:
+        scream.log_warning('Repo ' + repo.getName() + ' has no labels[]')
 
-    with open('issues.csv', 'ab') as output_csvfile:
-        scream.ssay('issues.csv opened for append..')
-        issueswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        for issue in repo.getIssues():
-            assert (type(issue.id) == int or issue.id is None)
-            assert (type(issue.number) == int or issue.number is None)
-            tempv = (repo.getName(),
-                     repo.getOwner(),
-                     (issue.assignee.login if issue.assignee is not None else ''),
-                     (issue.body.strip('\r').strip('\n') if issue.body is not None else ''),
-                     (issue.closed_at if issue.closed_at is not None else ''),
-                     (issue.closed_by.login if issue.closed_by is not None else ''),
-                     str(issue.id),
-                     str(issue.number),
-                     (issue.title if issue.title is not None else ''))
-            issueswriter.writerow(tempv)
+    if repo.getIssues() is not None:
+        with open('issues.csv', 'ab') as output_csvfile:
+            scream.ssay('issues.csv opened for append..')
+            issueswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            for issue in repo.getIssues():
+                assert (type(issue.id) == int or issue.id is None)
+                assert (type(issue.number) == int or issue.number is None)
+                tempv = (repo.getName(),
+                         repo.getOwner(),
+                         (issue.assignee.login if issue.assignee is not None else ''),
+                         (issue.body.strip('\r').strip('\n') if issue.body is not None else ''),
+                         (issue.closed_at if issue.closed_at is not None else ''),
+                         (issue.closed_by.login if issue.closed_by is not None else ''),
+                         str(issue.id),
+                         str(issue.number),
+                         (issue.title if issue.title is not None else ''))
+                issueswriter.writerow(tempv)
+    else:
+        scream.log_warning('Repo ' + repo.getName() + ' has no issues[]')
 
     with open('pulls.csv', 'ab') as output_csvfile:
         scream.ssay('pulls.csv opened for append..')
@@ -428,6 +444,8 @@ if __name__ == "__main__":
         except GithubException as e:
             if 'repo_labels' not in locals():
                 repo.setLabels([])
+            else:
+                repo.setLabels(repo_labels)
             scream.log_error('Repo didnt gave any labels, or paginated through' +
                        ' labels gave error. Issues are disabled for this' +
                        ' repo? + ' + key +
