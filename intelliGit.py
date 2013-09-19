@@ -249,11 +249,11 @@ def output_data(repo):
             for subscriber in repo.getContributors():
                 tempv = (repo.getName(),
                          repo.getOwner(),
-                         subscriber.login,
-                         subscriber.bio,
-                         subscriber.blog,
+                         (subscriber.login if subscriber.login is not None else ''),
+                         (subscriber.bio if subscriber.bio is not None else ''),
+                         (subscriber.blog if subscriber.blog is not None else ''),
                          str(subscriber.collaborators),
-                         subscriber.company,
+                         (subscriber.company if subscriber.company is not None else ''),
                          str(subscriber.contributions),
                          str(subscriber.followers),
                          str(subscriber.following))
