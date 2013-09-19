@@ -230,16 +230,19 @@ def output_data(repo):
                      commit.html_url)
             commitswriter.writerow(tempv)
 
-    with open('languages.csv', 'ab') as output_csvfile:
-        scream.ssay('languages.csv opened for append..')
-        langwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        for language in repo.getLanguages():
-            tempv = (repo.getName(),
-                     repo.getOwner(),
-                     language)
-            langwriter.writerow(tempv)
+    if repo.getLanguages is not None:
+        with open('languages.csv', 'ab') as output_csvfile:
+            scream.ssay('languages.csv opened for append..')
+            langwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            for language in repo.getLanguages():
+                tempv = (repo.getName(),
+                         repo.getOwner(),
+                         language)
+                langwriter.writerow(tempv)
+    else:
+        scream.log_warning('Repo ' + repo.getName() + ' has no languages[]')
 
-    if repo.getSubscribers() is not None:
+    if repo.getContributors() is not None:
         with open('subscribers.csv', 'ab') as output_csvfile:
             scream.ssay('subscribers.csv opened for append..')
             subscriberswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
