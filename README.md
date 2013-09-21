@@ -35,7 +35,7 @@ On output you get CSV files with below dimensions:
 
 There is an option to resume from a given repository, which is helpful due the GitHub API quota limits. Just give in arguments a repo and name (comma seperated) - it must exists in CSV input. Program will take care of job progress.
 
-`nohup python intelliGit.py resume=name,owner &`
+`nohup python intelliGit.py --resume=name,owner &`
 
 #### without resume mechanism (start from scratch)
 
