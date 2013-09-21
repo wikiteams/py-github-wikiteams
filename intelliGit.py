@@ -19,6 +19,7 @@ import gc
 import sys
 import codecs
 import cStringIO
+import intelliNotifications
 
 repos = dict()
 
@@ -419,18 +420,28 @@ if __name__ == "__main__":
         iteration_step_count += 1
         scream.ssay('Step no ' + str(iteration_step_count) + '. Working on a repo: ' + key)
 
-        scream.ssay('Checking size of a team')
-        '1. Rozmiar zespolu'
-        contributors = repository.get_contributors()
-        repo_contributors = []
-        for contributor in contributors:
-            repo_contributors.append(contributor)
-        repo.setContributors(repo_contributors)
-        #repo.setContributorsCount(len(repo_contributors))
-        'class fields are not garbage, its better to calculate count on demand'
-        scream.log('Added contributors of count: ' +
-                   str(len(repo_contributors)) +
-                   ' to a repo ' + key)
+        try:
+            scream.ssay('Checking size of a team')
+            '1. Rozmiar zespolu'
+            contributors = repository.get_contributors()
+            repo_contributors = []
+            for contributor in contributors:
+                repo_contributors.append(contributor)
+            repo.setContributors(repo_contributors)
+            #repo.setContributorsCount(len(repo_contributors))
+            'class fields are not garbage, its better to calculate count on demand'
+            scream.log('Added contributors of count: ' +
+                       str(len(repo_contributors)) +
+                       ' to a repo ' + key)
+        except GithubException as e:
+            if 'repo_contributors' not in locals():
+                repo.setContributors([])
+            else:
+                repo.setContributors(repo_contributors)
+            scream.log_error('Repo didnt gave any contributors, or paginated through' +
+                       ' contributors gave error. ' + key +
+                       ', error({0}): {1}'.
+                       format(e.status, e.data))
 
         scream.ssay('Getting languages of a repo')
         languages = repository.get_languages()  # dict object (json? object)
@@ -520,16 +531,26 @@ if __name__ == "__main__":
                        ', error({0}): {1}'.
                        format(e.status, e.data))
 
-        scream.ssay('Getting pull requests of a repo')
-        '10. Liczba Pull Requests'
-        '11. Liczba zaakceptowanych Pull Requests'
-        pulls = repository.get_pulls()
-        repo_pulls = []
-        for pull in pulls:
-            repo_pulls.append(pull)
-        repo.setPulls(repo_pulls)
-        scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
-                   ' to a repo ' + key)
+        try:
+            scream.ssay('Getting pull requests of a repo')
+            '10. Liczba Pull Requests'
+            '11. Liczba zaakceptowanych Pull Requests'
+            pulls = repository.get_pulls()
+            repo_pulls = []
+            for pull in pulls:
+                repo_pulls.append(pull)
+            repo.setPulls(repo_pulls)
+            scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
+                       ' to a repo ' + key)
+        except GithubException as e:
+            if 'repo_pulls' not in locals():
+                repo.setPulls([])
+            else:
+                repo.setPulls(repo_pulls)
+            scream.log_error('Repo didnt gave any pull requests, or paginated through' +
+                       ' pull requests gave error. ' + key +
+                       ', error({0}): {1}'.
+                       format(e.status, e.data))
 
         scream.ssay('Getting branches of a repo')
         'getting repo branches'
@@ -575,3 +596,6 @@ if __name__ == "__main__":
         reset_time = gh.rate_limiting_resettime
 
         scream.ssay('Rate limit reset time: ' + str(reset_time))
+
+        if iteration_step_count % 5 == 0:
+            intelliNotifications.report_quota(str(limit.rate.limit), str(limit.rate.remaining))
