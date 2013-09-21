@@ -15,7 +15,6 @@ from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
 import csv
 import getopt
-import opts
 import scream
 import gc
 import sys
