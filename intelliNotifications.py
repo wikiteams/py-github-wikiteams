@@ -2,16 +2,17 @@ import smtplib
 import threading
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import scream
 
 
 def report_quota(quota_is, quota_left):
     thr = threading.Thread(target=report_quota_async, args=(quota_is, quota_left))
-    print 'starting email thread...'
+    scream.ssay('starting email thread...')
     thr.start()  # will run "foo"
 
 
 def report_quota_async(quota_is, quota_left):
-    print 'report_quota_async started, quota_left is: ' + quota_left
+    scream.log('report_quota_async started, quota_left is: ' + quota_left)
     secrets = []
     with open('mail_pass.txt', 'r') as passfile:
         for line in passfile:
