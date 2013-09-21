@@ -167,7 +167,7 @@ def output_commit_comments(commit_comments, sha):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      sha,
-                     (comment.body.splitlines() if comment.body is not None else ''),
+                     (' '.join(comment.body.splitlines()) if comment.body is not None else ''),
                      (str(comment.commit_id) if comment.commit_id is not None else ''),  # logged above
                      (str(comment.created_at) if comment.created_at is not None else ''),
                      (str(comment.id) if comment.id is not None else ''),  # this is always int
@@ -321,7 +321,7 @@ def output_data(repo):
                 tempv = (repo.getName(),
                          repo.getOwner(),
                          (issue.assignee.login if issue.assignee is not None else ''),
-                         (issue.body.strip('\r').strip('\n') if issue.body is not None else ''),
+                         (' '.join(issue.body.splitlines()) if issue.body is not None else ''),
                          (issue.closed_at if issue.closed_at is not None else ''),
                          (issue.closed_by.login if issue.closed_by is not None else ''),
                          str(issue.id),
@@ -340,7 +340,7 @@ def output_data(repo):
                          repo.getOwner(),
                          str(pull.additions),  # is always int
                          (pull.assignee.login if pull.assignee is not None else ''),
-                         (pull.body.splitlines() if pull.body is not None else ''),
+                         (' '.join(pull.body.splitlines()) if pull.body is not None else ''),
                          str(pull.changed_files),  # is always int
                          (str(pull.closed_at) if pull.closed_at is not None else ''),
                          str(pull.comments),  # is always int
@@ -362,7 +362,7 @@ def output_data(repo):
                          str(pull.review_comments),  # is always int
                          (pull.review_comments_url if pull.review_comments_url is not None else ''),
                          (pull.state if pull.state is not None else ''),
-                         (pull.title.splitlines() if pull.title is not None else ''),
+                         (' '.join(pull.title.splitlines()) if pull.title is not None else ''),
                          (str(pull.updated_at) if pull.updated_at is not None else ''),
                          (pull.user.login if pull.user is not None else ''))
                 pullswriter.writerow(tempv)
