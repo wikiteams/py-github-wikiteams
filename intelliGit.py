@@ -14,12 +14,48 @@ version_name = 'version 1.2 codename: september'
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
 import csv
+import getopt
+import opts
 import scream
 import gc
 import sys
 import codecs
 import cStringIO
 import intelliNotifications
+import __builtin__
+
+auth_with_tokens = False
+use_utf8 = True
+resume_on_repo = None
+
+
+def usage():
+    f = open('usage.txt', 'r')
+    for line in f:
+        print line
+
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "ho:u:p:grv", ["help", "tokens=", "utf8=", "resume=", "verbose"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print str(err)  # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o in ("-v", "--verbose"):
+        __builtin__.verbose = True
+        scream.log('Enabling verbose mode.')
+    elif o in ("-h", "--help"):
+        usage()
+        sys.exit()
+    elif o in ("-t", "--tokens"):
+        auth_with_tokens = (a in ['true', 'True'])
+    elif o in ("-u", "--utf8"):
+        use_utf8 = (a in ['true', 'True'])
+    elif o in ("-r", "--resume"):
+        resume_on_repo = (a in ['true', 'True'])
 
 repos = dict()
 
@@ -33,9 +69,6 @@ file_names = ['by-forks-20028-33', 'by-forks-20028-44',
               'by-watchers-3391-118', 'by-watchers-129-82',
               'by-watchers-82-70']
 repos_reported_nonexist = []
-
-AUTH_WITH_TOKENS = False
-USE_UTF8 = True
 
 
 class MyDialect(csv.Dialect):
@@ -111,18 +144,19 @@ class UnicodeWriter:
 
 
 def make_headers():
-    with open('repos.csv', 'ab') as output_csvfile:
-        repowriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
-        tempv = ('name', 'owner', 'forks_count', 'watchers_count',
-                 'contributors_count', 'subscribers_count',
-                 'stargazers_count', 'labels_count', 'commits_count')
-        repowriter.writerow(tempv)
+    if resume_on_repo is not None:
+        with open('repos.csv', 'ab') as output_csvfile:
+            repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('name', 'owner', 'forks_count', 'watchers_count',
+                     'contributors_count', 'subscribers_count',
+                     'stargazers_count', 'labels_count', 'commits_count')
+            repowriter.writerow(tempv)
 
 
 def output_commit_comments(commit_comments, sha):
     with open('commit_comments.csv', 'ab') as output_csvfile:
         scream.log('commit_comments.csv opened for append..')
-        ccomentswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        ccomentswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
         for comment in commit_comments:
             assert (type(comment.id) == int or comment.id is None)
             assert (type(comment.position) == int or comment.position is None)
@@ -145,7 +179,7 @@ def output_commit_comments(commit_comments, sha):
 def output_commit_statuses(commit_statuses, sha):
     with open('commit_statuses.csv', 'ab') as output_csvfile:
         scream.log('commit_statuses.csv opened for append..')
-        cstatuswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        cstatuswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
         for status in commit_statuses:
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -162,7 +196,7 @@ def output_commit_statuses(commit_statuses, sha):
 def output_commit_stats(commit_stats, sha):
     with open('commit_stats.csv', 'ab') as output_csvfile:
         scream.log('commit_stats.csv opened for append..')
-        cstatswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        cstatswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
         assert (type(commit_stats.additions) == int or commit_stats.additions is None)
         assert (type(commit_stats.deletions) == int or commit_stats.deletions is None)
         assert (type(commit_stats.total) == int or commit_stats.total is None)
@@ -178,7 +212,7 @@ def output_commit_stats(commit_stats, sha):
 def output_data(repo):
     with open('repos.csv', 'ab') as output_csvfile:
         scream.ssay('repos.csv opened for append..')
-        repowriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
 
         rfc = repo.getForksCount()
         rwc = repo.getWatchersCount()
@@ -211,7 +245,7 @@ def output_data(repo):
 
     with open('contributors.csv', 'ab') as output_csvfile:
         scream.ssay('contributors.csv opened for append..')
-        contribwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        contribwriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
         for contributor in repo.getContributors():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -220,7 +254,7 @@ def output_data(repo):
 
     with open('commits.csv', 'ab') as output_csvfile:
         scream.ssay('commits.csv opened for append..')
-        commitswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+        commitswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
         for commit in repo.getCommits():
             tempv = (repo.getName(),
                      repo.getOwner(),
@@ -234,7 +268,7 @@ def output_data(repo):
     if repo.getLanguages is not None:
         with open('languages.csv', 'ab') as output_csvfile:
             scream.ssay('languages.csv opened for append..')
-            langwriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            langwriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
             for language in repo.getLanguages():
                 tempv = (repo.getName(),
                          repo.getOwner(),
@@ -246,7 +280,7 @@ def output_data(repo):
     if repo.getContributors() is not None:
         with open('subscribers.csv', 'ab') as output_csvfile:
             scream.ssay('subscribers.csv opened for append..')
-            subscriberswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            subscriberswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
             for subscriber in repo.getContributors():
                 tempv = (repo.getName(),
                          repo.getOwner(),
@@ -265,7 +299,7 @@ def output_data(repo):
     if repo.getLabels() is not None:
         with open('labels.csv', 'ab') as output_csvfile:
             scream.ssay('labels.csv opened for append..')
-            labelswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            labelswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
             for label in repo.getLabels():
                 tempv = (repo.getName(),
                          repo.getOwner(),
@@ -278,7 +312,7 @@ def output_data(repo):
     if repo.getIssues() is not None:
         with open('issues.csv', 'ab') as output_csvfile:
             scream.ssay('issues.csv opened for append..')
-            issueswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            issueswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
             for issue in repo.getIssues():
                 assert (type(issue.id) == int or issue.id is None)
                 assert (type(issue.number) == int or issue.number is None)
@@ -298,7 +332,7 @@ def output_data(repo):
     if repo.getPulls() is not None:
         with open('pulls.csv', 'ab') as output_csvfile:
             scream.ssay('pulls.csv opened for append..')
-            pullswriter = UnicodeWriter(output_csvfile) if USE_UTF8 else csv.writer(output_csvfile, dialect=MyDialect)
+            pullswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
             for pull in repo.getPulls():
                 tempv = (repo.getName(),
                          repo.getOwner(),
@@ -308,25 +342,25 @@ def output_data(repo):
                          str(pull.changed_files),  # is always int
                          (str(pull.closed_at) if pull.closed_at is not None else ''),
                          str(pull.comments),  # is always int
-                         pull.comments_url,
+                         (pull.comments_url if pull.comments_url is not None else ''),
                          (str(pull.created_at) if pull.created_at is not None else ''),
                          str(pull.deletions),  # is always int
-                         pull.diff_url,
-                         pull.html_url,
+                         (pull.diff_url if pull.diff_url is not None else ''),
+                         (pull.html_url if pull.html_url is not None else ''),
                          str(pull.id),  # is always int
-                         pull.issue_url,
-                         pull.merge_commit_sha,
+                         (pull.issue_url if pull.issue_url is not None else ''),
+                         (pull.merge_commit_sha if pull.merge_commit_sha is not None else ''),
                          str(pull.mergeable),  # is always boolean
-                         pull.mergeable_state,
+                         (pull.mergeable_state if pull.mergeable_state is not None else ''),
                          str(pull.merged),  # is always boolean
                          (str(pull.merged_at) if pull.merged_at is not None else ''),
                          str(pull.number),
-                         pull.patch_url,
-                         pull.review_comment_url,
+                         (pull.patch_url if pull.patch_url is not None else ''),
+                         (pull.review_comment_url if pull.review_comment_url is not None else ''),
                          str(pull.review_comments),  # is always int
-                         pull.review_comments_url,
-                         pull.state,
-                         pull.title,
+                         (pull.review_comments_url if pull.review_comments_url is not None else ''),
+                         (pull.state if pull.state is not None else ''),
+                         (pull.title if pull.title is not None else ''),
                          (str(pull.updated_at) if pull.updated_at is not None else ''),
                          (pull.user.login if pull.user is not None else ''))
                 pullswriter.writerow(tempv)
@@ -352,7 +386,7 @@ if __name__ == "__main__":
     client_id__ = str(secrets[2]).strip()
     client_secret__ = str(secrets[3]).strip()
 
-    if AUTH_WITH_TOKENS:
+    if auth_with_tokens:
         gh = Github(client_id=client_id__, client_secret=client_secret__)
     else:
         #print login_or_token__
@@ -407,6 +441,13 @@ if __name__ == "__main__":
 
     for key in repos:
         repo = repos[key]
+
+        if resume_on_repo is not None:
+            resume_on_repo_name = resume_on_repo.split(',')[0]
+            resume_on_repo_owner = resume_on_repo.split(',')[1]
+
+            if not ((resume_on_repo_name == repo.getName()) and (resume_on_repo_owner == repo.getOwner())):
+                continue
 
         try:
             repository = gh.get_repo(repo.getKey())
