@@ -22,6 +22,7 @@ import codecs
 import cStringIO
 import intelliNotifications
 import __builtin__
+import time
 
 auth_with_tokens = False
 use_utf8 = True
@@ -54,7 +55,8 @@ for o, a in opts:
     elif o in ("-u", "--utf8"):
         use_utf8 = (a in ['true', 'True'])
     elif o in ("-r", "--resume"):
-        resume_on_repo = (a in ['true', 'True'])
+        resume_on_repo = a
+        scream.ssay('Resume on repo? ' + str(resume_on_repo))
 
 repos = dict()
 
@@ -367,6 +369,14 @@ def output_data(repo):
         scream.log_warning('Repo ' + repo.getName() + ' has no pulls[]')
 
 
+def freeze():
+    sleepy_head_time = 60 * 60
+    time.sleep(sleepy_head_time)
+    limit = gh.get_rate_limit()
+    while limit.rate.remaining < 15:
+        time.sleep(sleepy_head_time)
+
+
 if __name__ == "__main__":
     '''
     Starts process of work on CSV files which are output of google bigquery
@@ -639,3 +649,6 @@ if __name__ == "__main__":
 
         if iteration_step_count % 5 == 0:
             intelliNotifications.report_quota(str(limit.rate.limit), str(limit.rate.remaining))
+
+        if limit.rate.remaining < 15:
+            freeze()
