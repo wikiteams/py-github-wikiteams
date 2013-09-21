@@ -27,6 +27,7 @@ import time
 auth_with_tokens = False
 use_utf8 = True
 resume_on_repo = None
+quota_check = 0
 
 
 def usage():
@@ -370,14 +371,18 @@ def output_data(repo):
 
 
 def check_quota_limit():
-    limit = gh.get_rate_limit()
-    scream.ssay('Rate limit: ' + str(limit.rate.limit) +
-                ' remaining: ' + str(limit.rate.remaining))
-    reset_time = gh.rate_limiting_resettime
-    scream.ssay('Rate limit reset time: ' + str(reset_time))
+    global quota_check
+    quota_check += 1
+    if quota_check > 9:
+        quota_check = 0
+        limit = gh.get_rate_limit()
+        scream.ssay('Rate limit: ' + str(limit.rate.limit) +
+                    ' remaining: ' + str(limit.rate.remaining))
+        reset_time = gh.rate_limiting_resettime
+        scream.ssay('Rate limit reset time: ' + str(reset_time))
 
-    if limit.rate.remaining < 10:
-        freeze()
+        if limit.rate.remaining < 10:
+            freeze()
 
 
 def freeze():
@@ -386,6 +391,10 @@ def freeze():
     limit = gh.get_rate_limit()
     while limit.rate.remaining < 15:
         time.sleep(sleepy_head_time)
+
+
+def freeze_more():
+    freeze()
 
 
 if __name__ == "__main__":
@@ -660,15 +669,15 @@ if __name__ == "__main__":
 
         limit = gh.get_rate_limit()
 
-        scream.ssay('Rate limit: ' + str(limit.rate.limit) +
+        scream.ssay('Rate limit (after whole repo is processed): ' + str(limit.rate.limit) +
                     ' remaining: ' + str(limit.rate.remaining))
 
         reset_time = gh.rate_limiting_resettime
 
-        scream.ssay('Rate limit reset time: ' + str(reset_time))
+        scream.ssay('Rate limit reset time is exactly: ' + str(reset_time))
 
         if iteration_step_count % 5 == 0:
             intelliNotifications.report_quota(str(limit.rate.limit), str(limit.rate.remaining))
 
         if limit.rate.remaining < 15:
-            freeze()
+            freeze_more()
