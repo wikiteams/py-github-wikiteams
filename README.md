@@ -1,4 +1,4 @@
-WikiTeams™ GitHub scientific dataset creator
+WikiTeams™ GitHub dataset creator
 ===================
 
 This software is available to public
@@ -40,3 +40,33 @@ There is an option to resume from a given repository, which is helpful due the G
 #### without resume mechanism (start from scratch)
 
 `nohup python intelliGit.py &`
+
+#### Configuration files
+
+##### pass.txt (not provided)
+
+File which holds authentication credentials to GitHub API.
+
+format:
+
+`login or token`
+
+`pass`
+
+`oath_id`
+
+`oath_secret`
+
+##### mail_pass.txt (not provided)
+
+Holds authentication to SMTP server. Program reports to email about quota use.
+
+format:
+
+`login`
+
+`pass`
+
+##### logging.conf
+
+You can use the one provided in our repo. Holds configuration for logging mechanism.
