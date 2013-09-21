@@ -166,7 +166,7 @@ def output_commit_comments(commit_comments, sha):
             tempv = (repo.getName(),
                      repo.getOwner(),
                      sha,
-                     (comment.body.strip('\r').strip('\n') if comment.body is not None else ''),
+                     (comment.body.splitlines() if comment.body is not None else ''),
                      (str(comment.commit_id) if comment.commit_id is not None else ''),  # logged above
                      (str(comment.created_at) if comment.created_at is not None else ''),
                      (str(comment.id) if comment.id is not None else ''),  # this is always int
@@ -339,7 +339,7 @@ def output_data(repo):
                          repo.getOwner(),
                          str(pull.additions),  # is always int
                          (pull.assignee.login if pull.assignee is not None else ''),
-                         (pull.body if pull.body is not None else ''),
+                         (pull.body.splitlines() if pull.body is not None else ''),
                          str(pull.changed_files),  # is always int
                          (str(pull.closed_at) if pull.closed_at is not None else ''),
                          str(pull.comments),  # is always int
@@ -361,12 +361,23 @@ def output_data(repo):
                          str(pull.review_comments),  # is always int
                          (pull.review_comments_url if pull.review_comments_url is not None else ''),
                          (pull.state if pull.state is not None else ''),
-                         (pull.title if pull.title is not None else ''),
+                         (pull.title.splitlines() if pull.title is not None else ''),
                          (str(pull.updated_at) if pull.updated_at is not None else ''),
                          (pull.user.login if pull.user is not None else ''))
                 pullswriter.writerow(tempv)
     else:
         scream.log_warning('Repo ' + repo.getName() + ' has no pulls[]')
+
+
+def check_quota_limit():
+    limit = gh.get_rate_limit()
+    scream.ssay('Rate limit: ' + str(limit.rate.limit) +
+                ' remaining: ' + str(limit.rate.remaining))
+    reset_time = gh.rate_limiting_resettime
+    scream.ssay('Rate limit reset time: ' + str(reset_time))
+
+    if limit.rate.remaining < 10:
+        freeze()
 
 
 def freeze():
@@ -477,6 +488,7 @@ if __name__ == "__main__":
             repo_contributors = []
             for contributor in contributors:
                 repo_contributors.append(contributor)
+                check_quota_limit()
             repo.setContributors(repo_contributors)
             #repo.setContributorsCount(len(repo_contributors))
             'class fields are not garbage, its better to calculate count on demand'
@@ -505,6 +517,7 @@ if __name__ == "__main__":
             repo_labels = []
             for label in labels:
                 repo_labels.append(label)
+                check_quota_limit()
             repo.setLabels(repo_labels)
             scream.log('Added labels of count: ' + str(len(repo_labels)) +
                        ' to a repo ' + key)
@@ -530,10 +543,12 @@ if __name__ == "__main__":
                 commit_comments = []
                 for comment in comments:
                     commit_comments.append(comment)
+                    check_quota_limit()
                 statuses = commit.get_statuses()
                 commit_statuses = []
                 for status in statuses:
                     commit_statuses.append(status)
+                    check_quota_limit()
                 'IMHO output to CSV already here...'
                 output_commit_comments(commit_comments, commit.sha)
                 output_commit_statuses(commit_statuses, commit.sha)
@@ -560,6 +575,7 @@ if __name__ == "__main__":
         repo_stargazers = []
         for stargazer in stargazers:
             repo_stargazers.append(stargazer)
+            check_quota_limit()
         repo.setStargazers(repo_stargazers)
         scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
                    ' to a repo ' + key)
@@ -571,6 +587,7 @@ if __name__ == "__main__":
             repo_issues = []
             for issue in issues:
                 repo_issues.append(issue)
+                check_quota_limit()
             repo.setIssues(repo_issues)
             scream.log('Added issues of count: ' + str(len(repo_issues)) +
                        ' to a repo ' + key)
@@ -589,6 +606,7 @@ if __name__ == "__main__":
             repo_pulls = []
             for pull in pulls:
                 repo_pulls.append(pull)
+                check_quota_limit()
             repo.setPulls(repo_pulls)
             scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
                        ' to a repo ' + key)
@@ -609,6 +627,7 @@ if __name__ == "__main__":
         repo_branches = []
         for branch in branches:
             repo_branches.append(branch)
+            check_quota_limit()
         repo.setBranches(repo_branches)
         scream.log('Added branches of count: ' + str(len(repo_branches)) +
                    ' to a repo ' + key)
@@ -619,6 +638,7 @@ if __name__ == "__main__":
         repo_subscribers = []
         for subscriber in subscribers:
             repo_subscribers.append(subscriber)
+            check_quota_limit()
         repo.setSubscribers(repo_subscribers)
         scream.log('Added subscribers of count: ' +
                    str(len(repo_subscribers)) +
