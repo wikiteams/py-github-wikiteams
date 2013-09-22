@@ -23,6 +23,7 @@ import cStringIO
 import intelliNotifications
 import __builtin__
 import time
+import datetime
 
 auth_with_tokens = False
 use_utf8 = True
@@ -37,7 +38,8 @@ def usage():
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "ho:u:p:grv", ["help", "tokens=", "utf8=", "resume=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "ho:u:p:grv", ["help", "tokens=",
+                               "utf8=", "resume=", "verbose"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print str(err)  # will print something like "option -a not recognized"
@@ -199,8 +201,10 @@ def output_commit_stats(commit_stats, sha):
     with open('commit_stats.csv', 'ab') as output_csvfile:
         scream.log('commit_stats.csv opened for append..')
         cstatswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-        assert (type(commit_stats.additions) == int or commit_stats.additions is None)
-        assert (type(commit_stats.deletions) == int or commit_stats.deletions is None)
+        assert (type(commit_stats.additions) == int or
+                commit_stats.additions is None)
+        assert (type(commit_stats.deletions) == int or
+                commit_stats.deletions is None)
         assert (type(commit_stats.total) == int or commit_stats.total is None)
         tempv = (repo.getName(),
                  repo.getOwner(),
@@ -235,8 +239,10 @@ def output_data(repo):
 
         tempv = (repo.getName(),
                  repo.getOwner(),
-                 str(rfc),  # this is always string representation of number ! str() allowed
-                 str(rwc),  # this is always string representation of number ! str() allowed
+                 str(rfc),  # this is always string representation of number
+                            # ! str() allowed
+                 str(rwc),  # this is always string representation of number
+                            # ! str() allowed
                  str(rcc),  # this is always int ! str() allowed
                  str(rsc),  # this is always int ! str() allowed
                  str(rstc),  # this is always int ! str() allowed
@@ -475,20 +481,22 @@ if __name__ == "__main__":
             resume_on_repo_name = resume_on_repo.split(',')[0]
             resume_on_repo_owner = resume_on_repo.split(',')[1]
 
-            if not ((resume_on_repo_name == repo.getName()) and (resume_on_repo_owner == repo.getOwner())):
+            if not ((resume_on_repo_name == repo.getName()) and
+                    (resume_on_repo_owner == repo.getOwner())):
                 continue
 
         try:
             repository = gh.get_repo(repo.getKey())
         except UnknownObjectException as e:
             scream.log_warning('Repo with key + ' + key +
-                       ' not found, error({0}): {1}'.
-                       format(e.status, e.data))
+                               ' not found, error({0}): {1}'.
+                               format(e.status, e.data))
             repos_reported_nonexist.append(key)
             continue
 
         iteration_step_count += 1
-        scream.ssay('Step no ' + str(iteration_step_count) + '. Working on a repo: ' + key)
+        scream.ssay('Step no ' + str(iteration_step_count) +
+                    '. Working on a repo: ' + key)
 
         try:
             scream.ssay('Checking size of a team')
@@ -500,7 +508,8 @@ if __name__ == "__main__":
                 check_quota_limit()
             repo.setContributors(repo_contributors)
             #repo.setContributorsCount(len(repo_contributors))
-            'class fields are not garbage, its better to calculate count on demand'
+            'class fields are not garbage, '
+            'its better to calculate count on demand'
             scream.log('Added contributors of count: ' +
                        str(len(repo_contributors)) +
                        ' to a repo ' + key)
@@ -509,10 +518,11 @@ if __name__ == "__main__":
                 repo.setContributors([])
             else:
                 repo.setContributors(repo_contributors)
-            scream.log_error('Repo didnt gave any contributors, or paginated through' +
-                       ' contributors gave error. ' + key +
-                       ', error({0}): {1}'.
-                       format(e.status, e.data))
+            scream.log_error('Repo didnt gave any contributors, ' +
+                             'or paginated through' +
+                             ' contributors gave error. ' + key +
+                             ', error({0}): {1}'.
+                             format(e.status, e.data))
 
         scream.ssay('Getting languages of a repo')
         languages = repository.get_languages()  # dict object (json? object)
@@ -535,11 +545,13 @@ if __name__ == "__main__":
                 repo.setLabels([])
             else:
                 repo.setLabels(repo_labels)
-            scream.log_error('Repo didnt gave any labels, or paginated through' +
-                       ' labels gave error. Issues are disabled for this' +
-                       ' repo? + ' + key +
-                       ', error({0}): {1}'.
-                       format(e.status, e.data))
+            scream.log_error('Repo didnt gave any labels, ' +
+                             'or paginated through' +
+                             ' labels gave error. ' +
+                             'Issues are disabled for this' +
+                             ' repo? + ' + key +
+                             ', error({0}): {1}'.
+                             format(e.status, e.data))
 
         scream.ssay('Getting commits of a repo')
         '2. Liczba commit'
@@ -568,10 +580,11 @@ if __name__ == "__main__":
         except GithubException as e:
             if 'repo_commits' not in locals():
                 repo.setCommits([])
-            scream.log_error('Paginating through comments, comment comments or statuses' +
-                       ' gave error. Try again? ' + key +
-                       ', error({0}): {1}'.
-                       format(e.status, e.data))
+            scream.log_error('Paginating through comments, ' +
+                             'comment comments or statuses' +
+                             ' gave error. Try again? ' + key +
+                             ', error({0}): {1}'.
+                             format(e.status, e.data))
 
         '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
         'there is no evidence for existance in GitHub API'
@@ -624,10 +637,11 @@ if __name__ == "__main__":
                 repo.setPulls([])
             else:
                 repo.setPulls(repo_pulls)
-            scream.log_error('Repo didnt gave any pull requests, or paginated through' +
-                       ' pull requests gave error. ' + key +
-                       ', error({0}): {1}'.
-                       format(e.status, e.data))
+            scream.log_error('Repo didnt gave any pull requests, ' +
+                             'or paginated through' +
+                             ' pull requests gave error. ' + key +
+                             ', error({0}): {1}'.
+                             format(e.status, e.data))
 
         scream.ssay('Getting branches of a repo')
         'getting repo branches'
@@ -669,15 +683,22 @@ if __name__ == "__main__":
 
         limit = gh.get_rate_limit()
 
-        scream.ssay('Rate limit (after whole repo is processed): ' + str(limit.rate.limit) +
+        scream.ssay('Rate limit (after whole repo is processed): ' +
+                    str(limit.rate.limit) +
                     ' remaining: ' + str(limit.rate.remaining))
 
         reset_time = gh.rate_limiting_resettime
-
-        scream.ssay('Rate limit reset time is exactly: ' + str(reset_time))
+        reset_time_human_readable = (datetime.datetime.fromtimestamp(
+                                     int(reset_time)).strftime(
+                                     '%Y-%m-%d %H:%M:%S')
+                                     )
+        scream.ssay('Rate limit reset time is exactly: ' +
+                    str(reset_time) + ' which means: ' +
+                    reset_time_human_readable)
 
         if iteration_step_count % 5 == 0:
-            intelliNotifications.report_quota(str(limit.rate.limit), str(limit.rate.remaining))
+            intelliNotifications.report_quota(str(limit.rate.limit),
+                                              str(limit.rate.remaining))
 
         if limit.rate.remaining < 15:
             freeze_more()
