@@ -43,6 +43,13 @@ class MyRepository():
     repository_subscribers = None
     repository_watchers = None
     repository_url = None
+    repo_object = None
+
+    def setRepoObject(self, repoobject):
+        self.repo_object = repoobject
+
+    def getRepoObject(self):
+        return self.repo_object
 
     def setKey(self, key):
         self.key = key

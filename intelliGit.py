@@ -262,6 +262,7 @@ def output_data(repo):
         scream.ssay('repos.csv opened for append..')
         repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
 
+        rn = repo.getRepoObject()
         rfc = repo.getForksCount()
         rwc = repo.getWatchersCount()
         rcc = repo.getContributorsCount()
@@ -290,7 +291,30 @@ def output_data(repo):
                  str(rstc),  # this is always int ! str() allowed
                  str(rlc),  # this is always int ! str() allowed
                  str(rcmc),  # this is always int ! str() allowed
-                 str(rpc))  # this is always int ! str() allowed
+                 str(rpc),  # this is always int ! str() allowed
+                 rn.archive_url if rn.archive_url is not None else '',
+                 rn.assignees_url if rn.assignees_url is not None else '',
+                 rn.blobs_url if rn.blobs_url is not None else '',
+                 rn.branches_url if rn.branches_url is not None else '',
+                 rn.clone_url if rn.clone_url is not None else '',
+                 rn.collaborators_url if rn.collaborators_url is not None else '',
+                 rn.comments_url if rn.comments_url is not None else '',
+                 rn.commits_url if rn.commits_url is not None else '',
+                 rn.compare_url if rn.compare_url is not None else '',
+                 rn.contents_url if rn.contents_url is not None else '',
+                 rn.contributors_url if rn.contributors_url is not None else '',
+                 str(rn.created_at) if rn.created_at is not None else '',
+                 rn.default_branch if rn.default_branch is not None else '',
+                 rn.description if rn.description is not None else '',
+                 rn.events_url if rn.events_url is not None else '',
+                 str(rn.fork) if rn.fork is not None else '',
+                 rn.full_name if rn.full_name is not None else '',
+                 rn.git_commits_url if rn.git_commits_url is not None else '',
+                 rn.git_refs_url if rn.git_refs_url is not None else '',
+                 rn.git_tags_url if rn.git_tags_url is not None else '',
+                 str(rn.has_downloads) if rn.has_downloads is not None else '',
+                 str(rn.has_wiki) if rn.has_wiki is not None else '',
+                 rn.master_branch if rn.master_branch is not None else '')
         repowriter.writerow(tempv)
 
     with open('contributors.csv', 'ab') as output_csvfile:
@@ -539,6 +563,7 @@ if __name__ == "__main__":
 
         try:
             repository = gh.get_repo(repo.getKey())
+            repo.setRepoObject(repository)
         except UnknownObjectException as e:
             scream.log_warning('Repo with key + ' + key +
                                 ' not found, error({0}): {1}'.
