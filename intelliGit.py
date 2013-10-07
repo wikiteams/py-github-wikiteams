@@ -3,13 +3,13 @@ WikiTeams.pl top 32000 repos dataset creator
 Please keep this file with PEP8 standard
 Dont fork without good reason, use clone instead
 
-@since 1.2
+@since 1.3
 @author Oskar Jarczyk
 
 @update 18.09.2013
 '''
 
-version_name = 'version 1.2 codename: september'
+version_name = 'version 1.3 codename: october'
 
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
@@ -28,6 +28,8 @@ import datetime
 auth_with_tokens = False
 use_utf8 = True
 resume_on_repo = None
+resume_stage = None
+resume_entity = None
 quota_check = 0
 
 
@@ -38,8 +40,8 @@ def usage():
 
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "ho:u:p:grv", ["help", "tokens=",
-                               "utf8=", "resume=", "verbose"])
+    opts, args = getopt.getopt(sys.argv[1:], "ht:u:r:s:e:v", ["help", "tokens=",
+                               "utf8=", "resume=", "resumestage=", "entity=", "verbose"])
 except getopt.GetoptError as err:
     # print help information and exit:
     print str(err)  # will print something like "option -a not recognized"
@@ -49,17 +51,23 @@ except getopt.GetoptError as err:
 for o, a in opts:
     if o in ("-v", "--verbose"):
         __builtin__.verbose = True
-        scream.log('Enabling verbose mode.')
+        scream.ssay('Enabling verbose mode.')
     elif o in ("-h", "--help"):
         usage()
         sys.exit()
     elif o in ("-t", "--tokens"):
         auth_with_tokens = (a in ['true', 'True'])
     elif o in ("-u", "--utf8"):
-        use_utf8 = (a in ['true', 'True'])
+        use_utf8 = (a not in ['false', 'False'])
     elif o in ("-r", "--resume"):
         resume_on_repo = a
         scream.ssay('Resume on repo? ' + str(resume_on_repo))
+    elif o in ("-s", "--resumestage"):
+        resume_stage = a
+        scream.ssay('Resume on repo with stage ' + str(resume_stage))
+    elif o in ("-e", "--entity"):
+        resume_entity = a
+        scream.ssay('Resume on stage with entity ' + str(resume_entity))
 
 repos = dict()
 
@@ -148,6 +156,8 @@ class UnicodeWriter:
 
 
 def make_headers():
+    'If we are resuming GitHub crawl than dont create headers - '
+    'CSV files are already created and they have some data'
     if resume_on_repo is not None:
         with open('repos.csv', 'ab') as output_csvfile:
             repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
@@ -155,6 +165,35 @@ def make_headers():
                      'contributors_count', 'subscribers_count',
                      'stargazers_count', 'labels_count', 'commits_count')
             repowriter.writerow(tempv)
+
+        with open('commit_comments.csv', 'ab') as output_csvfile:
+            ccomentswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('repo_name', 'repo_owner', 'sha', 'comment_body',
+                     'commit_id', 'created_at', 'html_url',
+                     'id', 'user_login', 'line', 'path', 'position', 'updated_at')
+            ccomentswriter.writerow(tempv)
+
+        with open('commit_statuses.csv', 'ab') as output_csvfile:
+            cstatuswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('repo_name', 'repo_owner', 'sha', 'created_at',
+                     'user_login', 'description', 'id',
+                     'state', 'updated_at', 'url')
+            cstatuswriter.writerow(tempv)
+
+        with open('languages.csv', 'ab') as output_csvfile:
+            languageswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('repo_name', 'repo_owner', 'language')
+            languageswriter.writerow(tempv)
+
+        with open('contributors.csv', 'ab') as output_csvfile:
+            contributorswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('repo_name', 'repo_owner', 'contributor_login')
+            contributorswriter.writerow(tempv)
+
+        with open('commits.csv', 'ab') as output_csvfile:
+            commitswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+            tempv = ('repo_name', 'repo_owner', 'sha', 'author_login', 'commiter_login', 'url', 'htm_url', 'comments_url')
+            commitswriter.writerow(tempv)
 
 
 def output_commit_comments(commit_comments, sha):
@@ -172,7 +211,9 @@ def output_commit_comments(commit_comments, sha):
                      (' '.join(comment.body.splitlines()) if comment.body is not None else ''),
                      (str(comment.commit_id) if comment.commit_id is not None else ''),  # logged above
                      (str(comment.created_at) if comment.created_at is not None else ''),
+                     (str(comment.html_url) if comment.html_url is not None else ''),
                      (str(comment.id) if comment.id is not None else ''),  # this is always int
+                     (comment.user.login if comment.user is not None else ''),
                      (str(comment.line) if comment.line is not None else ''),  # this is always int
                      (comment.path if comment.path is not None else ''),
                      (str(comment.position) if comment.position is not None else ''),  # this is always int
@@ -193,7 +234,8 @@ def output_commit_statuses(commit_statuses, sha):
                      (status.description if status.description is not None else ''),
                      (str(status.id) if status.id is not None else ''),
                      (status.state if status.state is not None else ''),
-                     (str(status.updated_at) if status.updated_at is not None else ''))
+                     (str(status.updated_at) if status.updated_at is not None else ''),
+                     (str(status.url) if status.url is not None else ''))
             cstatuswriter.writerow(tempv)
 
 
@@ -270,7 +312,8 @@ def output_data(repo):
                      (commit.author.login if commit.author is not None else ''),
                      (commit.committer.login if commit.committer is not None else ''),
                      commit.url,
-                     commit.html_url)
+                     commit.html_url,
+                     commit.comments_url)
             commitswriter.writerow(tempv)
 
     if repo.getLanguages is not None:
@@ -413,20 +456,28 @@ if __name__ == "__main__":
     scream.say(version_name)
 
     secrets = []
+    credential_list = []
     with open('pass.txt', 'r') as passfile:
+        line__id = 0
         for line in passfile:
+            line__id += 1
             secrets.append(line)
-    login_or_token__ = str(secrets[0]).strip()
-    pass_string = str(secrets[1]).strip()
-    client_id__ = str(secrets[2]).strip()
-    client_secret__ = str(secrets[3]).strip()
+            if line__id % 4 == 0:
+                login_or_token__ = str(secrets[0]).strip()
+                pass_string = str(secrets[1]).strip()
+                client_id__ = str(secrets[2]).strip()
+                client_secret__ = str(secrets[3]).strip()
+                credential_list.append({'login' : login_or_token__ , 'pass' : pass_string , 'client_id' : client_id__ , 'client_secret' : client_secret__})
+                del secrets[:]
+
+    scream.say(str(len(credential_list)) + ' full credentials successfully loaded')
 
     if auth_with_tokens:
-        gh = Github(client_id=client_id__, client_secret=client_secret__)
+        gh = Github(client_id=credential_list[0]['client_id'], client_secret=credential_list[0]['client_secret'])
     else:
         #print login_or_token__
         #print pass_string
-        gh = Github(login_or_token__, pass_string)
+        gh = Github(credential_list[0]['login'], credential_list[0]['pass'])
 
     is_gc_turned_on = 'turned on' if str(gc.isenabled()) else 'turned off'
     scream.ssay('Garbage collector is ' + is_gc_turned_on)
@@ -483,14 +534,15 @@ if __name__ == "__main__":
 
             if not ((resume_on_repo_name == repo.getName()) and
                     (resume_on_repo_owner == repo.getOwner())):
+                iteration_step_count += 1
                 continue
 
         try:
             repository = gh.get_repo(repo.getKey())
         except UnknownObjectException as e:
             scream.log_warning('Repo with key + ' + key +
-                               ' not found, error({0}): {1}'.
-                               format(e.status, e.data))
+                                ' not found, error({0}): {1}'.
+                                format(e.status, e.data))
             repos_reported_nonexist.append(key)
             continue
 
@@ -498,174 +550,197 @@ if __name__ == "__main__":
         scream.ssay('Step no ' + str(iteration_step_count) +
                     '. Working on a repo: ' + key)
 
-        try:
-            scream.ssay('Checking size of a team')
-            '1. Rozmiar zespolu'
-            contributors = repository.get_contributors()
-            repo_contributors = []
-            for contributor in contributors:
-                repo_contributors.append(contributor)
-                check_quota_limit()
-            repo.setContributors(repo_contributors)
-            #repo.setContributorsCount(len(repo_contributors))
-            'class fields are not garbage, '
-            'its better to calculate count on demand'
-            scream.log('Added contributors of count: ' +
-                       str(len(repo_contributors)) +
-                       ' to a repo ' + key)
-        except GithubException as e:
-            if 'repo_contributors' not in locals():
-                repo.setContributors([])
-            else:
+        if resume_stage in [None, 'contributors']:
+            try:
+                scream.ssay('Checking size of a team')
+                '1. Rozmiar zespolu'
+                contributors = repository.get_contributors()
+                repo_contributors = []
+                for contributor in contributors:
+                    repo_contributors.append(contributor)
+                    check_quota_limit()
                 repo.setContributors(repo_contributors)
-            scream.log_error('Repo didnt gave any contributors, ' +
-                             'or paginated through' +
-                             ' contributors gave error. ' + key +
-                             ', error({0}): {1}'.
-                             format(e.status, e.data))
+                #repo.setContributorsCount(len(repo_contributors))
+                'class fields are not garbage, '
+                'its better to calculate count on demand'
+                scream.log('Added contributors of count: ' +
+                           str(len(repo_contributors)) +
+                           ' to a repo ' + key)
+            except GithubException as e:
+                if 'repo_contributors' not in locals():
+                    repo.setContributors([])
+                else:
+                    repo.setContributors(repo_contributors)
+                scream.log_error('Repo didnt gave any contributors, ' +
+                                 'or paginated through' +
+                                 ' contributors gave error. ' + key +
+                                 ', error({0}): {1}'.
+                                 format(e.status, e.data))
+            finally:
+                resume_stage = None
 
-        scream.ssay('Getting languages of a repo')
-        languages = repository.get_languages()  # dict object (json? object)
-        repo.setLanguage(languages)
-        scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
+        if resume_stage in [None, 'languages']:
+            scream.ssay('Getting languages of a repo')
+            languages = repository.get_languages()  # dict object (json? object)
+            repo.setLanguage(languages)
+            scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
+            resume_stage = None
 
-        scream.ssay('Getting labels of a repo')
-        'getting labels, label is a tag which you can put in an issue'
-        try:
-            labels = repository.get_labels()  # github.Label object
-            repo_labels = []
-            for label in labels:
-                repo_labels.append(label)
-                check_quota_limit()
-            repo.setLabels(repo_labels)
-            scream.log('Added labels of count: ' + str(len(repo_labels)) +
-                       ' to a repo ' + key)
-        except GithubException as e:
-            if 'repo_labels' not in locals():
-                repo.setLabels([])
-            else:
+        if resume_stage in [None, 'labels']:
+            scream.ssay('Getting labels of a repo')
+            'getting labels, label is a tag which you can put in an issue'
+            try:
+                labels = repository.get_labels()  # github.Label object
+                repo_labels = []
+                for label in labels:
+                    repo_labels.append(label)
+                    check_quota_limit()
                 repo.setLabels(repo_labels)
-            scream.log_error('Repo didnt gave any labels, ' +
-                             'or paginated through' +
-                             ' labels gave error. ' +
-                             'Issues are disabled for this' +
-                             ' repo? + ' + key +
-                             ', error({0}): {1}'.
-                             format(e.status, e.data))
+                scream.log('Added labels of count: ' + str(len(repo_labels)) +
+                           ' to a repo ' + key)
+            except GithubException as e:
+                if 'repo_labels' not in locals():
+                    repo.setLabels([])
+                else:
+                    repo.setLabels(repo_labels)
+                scream.log_error('Repo didnt gave any labels, ' +
+                                 'or paginated through' +
+                                 ' labels gave error. ' +
+                                 'Issues are disabled for this' +
+                                 ' repo? + ' + key +
+                                 ', error({0}): {1}'.
+                                 format(e.status, e.data))
+            finally:
+                resume_stage = None
 
-        scream.ssay('Getting commits of a repo')
-        '2. Liczba commit'
-        try:
-            commits = repository.get_commits()
-            repo_commits = []
-            for commit in commits:
-                repo_commits.append(commit)
-                comments = commit.get_comments()
-                commit_comments = []
-                for comment in comments:
-                    commit_comments.append(comment)
-                    check_quota_limit()
-                statuses = commit.get_statuses()
-                commit_statuses = []
-                for status in statuses:
-                    commit_statuses.append(status)
-                    check_quota_limit()
-                'IMHO output to CSV already here...'
-                output_commit_comments(commit_comments, commit.sha)
-                output_commit_statuses(commit_statuses, commit.sha)
-                output_commit_stats(commit.stats, commit.sha)
-            repo.setCommits(repo_commits)
-            scream.log('Added commits of count: ' + str(len(repo_commits)) +
-                       ' to a repo ' + key)
-        except GithubException as e:
-            if 'repo_commits' not in locals():
-                repo.setCommits([])
-            scream.log_error('Paginating through comments, ' +
-                             'comment comments or statuses' +
-                             ' gave error. Try again? ' + key +
-                             ', error({0}): {1}'.
-                             format(e.status, e.data))
+        if resume_stage in [None, 'commits']:
+            scream.ssay('Getting commits of a repo')
+            '2. Liczba commit'
+            try:
+                commits = repository.get_commits()
+                repo_commits = []
+                for commit in commits:
+                    repo_commits.append(commit)
+                    comments = commit.get_comments()
+                    commit_comments = []
+                    for comment in comments:
+                        commit_comments.append(comment)
+                        check_quota_limit()
+                    statuses = commit.get_statuses()
+                    commit_statuses = []
+                    for status in statuses:
+                        commit_statuses.append(status)
+                        check_quota_limit()
+                    'IMHO output to CSV already here...'
+                    output_commit_comments(commit_comments, commit.sha)
+                    output_commit_statuses(commit_statuses, commit.sha)
+                    output_commit_stats(commit.stats, commit.sha)
+                repo.setCommits(repo_commits)
+                scream.log('Added commits of count: ' + str(len(repo_commits)) +
+                           ' to a repo ' + key)
+            except GithubException as e:
+                if 'repo_commits' not in locals():
+                    repo.setCommits([])
+                scream.log_error('Paginating through comments, ' +
+                                 'comment comments or statuses' +
+                                 ' gave error. Try again? ' + key +
+                                 ', error({0}): {1}'.
+                                 format(e.status, e.data))
+            finally:
+                resume_stage = None
 
         '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
         'there is no evidence for existance in GitHub API'
         'of a function for getting skill stats in a commit'
         'TO DO: implement a workaround with BEAUTIFUL SOUP'
 
-        scream.ssay('Getting stargazers of a repo')
-        '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
-        stargazers = repository.get_stargazers()
-        repo_stargazers = []
-        for stargazer in stargazers:
-            repo_stargazers.append(stargazer)
-            check_quota_limit()
-        repo.setStargazers(repo_stargazers)
-        scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
-                   ' to a repo ' + key)
-
-        scream.ssay('Getting issues of a repo')
-        '6. Liczba Issues w poszczegolnych typach'
-        try:
-            issues = repository.get_issues()
-            repo_issues = []
-            for issue in issues:
-                repo_issues.append(issue)
+        if resume_stage in [None, 'stargazers']:
+            scream.ssay('Getting stargazers of a repo')
+            '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
+            stargazers = repository.get_stargazers()
+            repo_stargazers = []
+            for stargazer in stargazers:
+                repo_stargazers.append(stargazer)
                 check_quota_limit()
-            repo.setIssues(repo_issues)
-            scream.log('Added issues of count: ' + str(len(repo_issues)) +
+            repo.setStargazers(repo_stargazers)
+            scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
                        ' to a repo ' + key)
-        except GithubException as e:
-            scream.log('Repo didnt gave any issues, or paginated through' +
-                       ' issues gave error. Issues are disabled for this' +
-                       ' repo? + ' + key +
-                       ', error({0}): {1}'.
-                       format(e.status, e.data))
+            resume_stage = None
 
-        try:
-            scream.ssay('Getting pull requests of a repo')
-            '10. Liczba Pull Requests'
-            '11. Liczba zaakceptowanych Pull Requests'
-            pulls = repository.get_pulls()
-            repo_pulls = []
-            for pull in pulls:
-                repo_pulls.append(pull)
-                check_quota_limit()
-            repo.setPulls(repo_pulls)
-            scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
-                       ' to a repo ' + key)
-        except GithubException as e:
-            if 'repo_pulls' not in locals():
-                repo.setPulls([])
-            else:
+        if resume_stage in [None, 'issues']:
+            scream.ssay('Getting issues of a repo')
+            '6. Liczba Issues w poszczegolnych typach'
+            try:
+                issues = repository.get_issues()
+                repo_issues = []
+                for issue in issues:
+                    repo_issues.append(issue)
+                    check_quota_limit()
+                repo.setIssues(repo_issues)
+                scream.log('Added issues of count: ' + str(len(repo_issues)) +
+                           ' to a repo ' + key)
+            except GithubException as e:
+                scream.log('Repo didnt gave any issues, or paginated through' +
+                           ' issues gave error. Issues are disabled for this' +
+                           ' repo? + ' + key +
+                           ', error({0}): {1}'.
+                           format(e.status, e.data))
+            finally:
+                resume_stage = None
+
+        if resume_stage in [None, 'pull_requests']:
+            try:
+                scream.ssay('Getting pull requests of a repo')
+                '10. Liczba Pull Requests'
+                '11. Liczba zaakceptowanych Pull Requests'
+                pulls = repository.get_pulls()
+                repo_pulls = []
+                for pull in pulls:
+                    repo_pulls.append(pull)
+                    check_quota_limit()
                 repo.setPulls(repo_pulls)
-            scream.log_error('Repo didnt gave any pull requests, ' +
-                             'or paginated through' +
-                             ' pull requests gave error. ' + key +
-                             ', error({0}): {1}'.
-                             format(e.status, e.data))
+                scream.log('Added pulls of count: ' + str(len(repo_pulls)) +
+                           ' to a repo ' + key)
+            except GithubException as e:
+                if 'repo_pulls' not in locals():
+                    repo.setPulls([])
+                else:
+                    repo.setPulls(repo_pulls)
+                scream.log_error('Repo didnt gave any pull requests, ' +
+                                 'or paginated through' +
+                                 ' pull requests gave error. ' + key +
+                                 ', error({0}): {1}'.
+                                 format(e.status, e.data))
+            finally:
+                resume_stage = None
 
-        scream.ssay('Getting branches of a repo')
-        'getting repo branches'
-        '13. Liczba Branch'
-        branches = repository.get_branches()
-        repo_branches = []
-        for branch in branches:
-            repo_branches.append(branch)
-            check_quota_limit()
-        repo.setBranches(repo_branches)
-        scream.log('Added branches of count: ' + str(len(repo_branches)) +
-                   ' to a repo ' + key)
+        if resume_stage in [None, 'branches']:
+            scream.ssay('Getting branches of a repo')
+            'getting repo branches'
+            '13. Liczba Branch'
+            branches = repository.get_branches()
+            repo_branches = []
+            for branch in branches:
+                repo_branches.append(branch)
+                check_quota_limit()
+            repo.setBranches(repo_branches)
+            scream.log('Added branches of count: ' + str(len(repo_branches)) +
+                       ' to a repo ' + key)
+            resume_stage = None
 
-        scream.ssay('Getting subscribers of a repo')
-        'get subscribers'
-        subscribers = repository.get_subscribers()
-        repo_subscribers = []
-        for subscriber in subscribers:
-            repo_subscribers.append(subscriber)
-            check_quota_limit()
-        repo.setSubscribers(repo_subscribers)
-        scream.log('Added subscribers of count: ' +
-                   str(len(repo_subscribers)) +
-                   ' to a repo ' + key)
+        if resume_stage in [None, 'subscribers']:
+            scream.ssay('Getting subscribers of a repo')
+            'get subscribers'
+            subscribers = repository.get_subscribers()
+            repo_subscribers = []
+            for subscriber in subscribers:
+                repo_subscribers.append(subscriber)
+                check_quota_limit()
+            repo.setSubscribers(repo_subscribers)
+            scream.log('Added subscribers of count: ' +
+                       str(len(repo_subscribers)) +
+                       ' to a repo ' + key)
+            resume_stage = None
 
         scream.say('Persisting a repo to CSV output...')
 
