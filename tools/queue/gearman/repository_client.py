@@ -2,7 +2,7 @@ from gearman import GearmanClient
 
 import psycopg2, github, time
 
-class GitHubProducer():
+class GitHubRepositoryClient():
     db = None
     csv_files = None
     csv_data = None
@@ -27,8 +27,8 @@ class GitHubProducer():
         for repository in repositories:
             repositoryName = '%s/%s' % (repository[0], repository[1])
             print repositoryName
-            self.client.submit_job('consume', repositoryName, background=True)
+            self.client.submit_job('contributors', repositoryName, background=True)
 
 if __name__ == "__main__":
-    producer = GitHubProducer()
+    producer = GitHubRepositoryClient()
     producer.produce()

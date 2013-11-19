@@ -32,57 +32,6 @@ resume_stage = None
 resume_entity = None
 quota_check = 0
 
-
-def usage():
-    f = open('usage.txt', 'r')
-    for line in f:
-        print line
-
-
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "ht:u:r:s:e:v", ["help", "tokens=",
-                               "utf8=", "resume=", "resumestage=", "entity=", "verbose"])
-except getopt.GetoptError as err:
-    # print help information and exit:
-    print str(err)  # will print something like "option -a not recognized"
-    usage()
-    sys.exit(2)
-
-for o, a in opts:
-    if o in ("-v", "--verbose"):
-        __builtin__.verbose = True
-        scream.ssay('Enabling verbose mode.')
-    elif o in ("-h", "--help"):
-        usage()
-        sys.exit()
-    elif o in ("-t", "--tokens"):
-        auth_with_tokens = (a in ['true', 'True'])
-    elif o in ("-u", "--utf8"):
-        use_utf8 = (a not in ['false', 'False'])
-    elif o in ("-r", "--resume"):
-        resume_on_repo = a
-        scream.ssay('Resume on repo? ' + str(resume_on_repo))
-    elif o in ("-s", "--resumestage"):
-        resume_stage = a
-        scream.ssay('Resume on repo with stage ' + str(resume_stage))
-    elif o in ("-e", "--entity"):
-        resume_entity = a
-        scream.ssay('Resume on stage with entity ' + str(resume_entity))
-
-repos = dict()
-
-'''
-Explanation of an input data, theye are CSV file with data
-retrieved from Google BigQuery consisted of repo name, owner
-and sorted by number of forks and watchers, for analysis we
-take around 32k biggest GitHub repositories
-'''
-file_names = ['by-forks-20028-33', 'by-forks-20028-44',
-              'by-watchers-3391-118', 'by-watchers-129-82',
-              'by-watchers-82-70']
-repos_reported_nonexist = []
-
-
 class MyDialect(csv.Dialect):
     strict = True
     skipinitialspace = True
@@ -154,46 +103,117 @@ class UnicodeWriter:
         for row in rows:
             self.writerow(row)
 
+class GitHubWikiTeams():
+    accounts = []
 
-def make_headers():
-    'If we are resuming GitHub crawl than dont create headers - '
-    'CSV files are already created and they have some data'
-    if resume_on_repo is not None:
-        with open('repos.csv', 'ab') as output_csvfile:
-            repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('name', 'owner', 'forks_count', 'watchers_count',
-                     'contributors_count', 'subscribers_count',
-                     'stargazers_count', 'labels_count', 'commits_count')
-            repowriter.writerow(tempv)
+    def get_accounts(self):
+        secrets = []
 
-        with open('commit_comments.csv', 'ab') as output_csvfile:
-            ccomentswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('repo_name', 'repo_owner', 'sha', 'comment_body',
-                     'commit_id', 'created_at', 'html_url',
-                     'id', 'user_login', 'line', 'path', 'position', 'updated_at')
-            ccomentswriter.writerow(tempv)
+        with open('pass.txt', 'r') as passfile:
+            line__id = 0
+            for line in passfile:
+                line__id += 1
+                secrets.append(line)
+                if line__id % 4 == 0:
+                    login_or_token__ = str(secrets[0]).strip()
+                    pass_string = str(secrets[1]).strip()
+                    client_id__ = str(secrets[2]).strip()
+                    client_secret__ = str(secrets[3]).strip()
+                    self.accounts.append({'login' : login_or_token__ , 'pass' : pass_string , 'client_id' : client_id__ , 'client_secret' : client_secret__})
+                    del secrets[:]
 
-        with open('commit_statuses.csv', 'ab') as output_csvfile:
-            cstatuswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('repo_name', 'repo_owner', 'sha', 'created_at',
-                     'user_login', 'description', 'id',
-                     'state', 'updated_at', 'url')
-            cstatuswriter.writerow(tempv)
+        scream.say(str(len(self.accounts)) + ' full credentials successfully loaded')
 
-        with open('languages.csv', 'ab') as output_csvfile:
-            languageswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('repo_name', 'repo_owner', 'language')
-            languageswriter.writerow(tempv)
+        return self.accounts
 
-        with open('contributors.csv', 'ab') as output_csvfile:
-            contributorswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('repo_name', 'repo_owner', 'contributor_login')
-            contributorswriter.writerow(tempv)
+    def make_headers(self):
+        'If we are resuming GitHub crawl than dont create headers - '
+        'CSV files are already created and they have some data'
+        if resume_on_repo is not None:
+            with open('repos.csv', 'ab') as output_csvfile:
+                repowriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('name', 'owner', 'forks_count', 'watchers_count',
+                         'contributors_count', 'subscribers_count',
+                         'stargazers_count', 'labels_count', 'commits_count')
+                repowriter.writerow(tempv)
 
-        with open('commits.csv', 'ab') as output_csvfile:
-            commitswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
-            tempv = ('repo_name', 'repo_owner', 'sha', 'author_login', 'commiter_login', 'url', 'htm_url', 'comments_url')
-            commitswriter.writerow(tempv)
+            with open('commit_comments.csv', 'ab') as output_csvfile:
+                ccomentswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('repo_name', 'repo_owner', 'sha', 'comment_body',
+                         'commit_id', 'created_at', 'html_url',
+                         'id', 'user_login', 'line', 'path', 'position', 'updated_at')
+                ccomentswriter.writerow(tempv)
+
+            with open('commit_statuses.csv', 'ab') as output_csvfile:
+                cstatuswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('repo_name', 'repo_owner', 'sha', 'created_at',
+                         'user_login', 'description', 'id',
+                         'state', 'updated_at', 'url')
+                cstatuswriter.writerow(tempv)
+
+            with open('languages.csv', 'ab') as output_csvfile:
+                languageswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('repo_name', 'repo_owner', 'language')
+                languageswriter.writerow(tempv)
+
+            with open('contributors.csv', 'ab') as output_csvfile:
+                contributorswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('repo_name', 'repo_owner', 'contributor_login')
+                contributorswriter.writerow(tempv)
+
+            with open('commits.csv', 'ab') as output_csvfile:
+                commitswriter = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=MyDialect)
+                tempv = ('repo_name', 'repo_owner', 'sha', 'author_login', 'commiter_login', 'url', 'htm_url', 'comments_url')
+                commitswriter.writerow(tempv)
+
+def usage():
+    f = open('usage.txt', 'r')
+    for line in f:
+        print line
+
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "ht:u:r:s:e:v", ["help", "tokens=",
+                               "utf8=", "resume=", "resumestage=", "entity=", "verbose"])
+except getopt.GetoptError as err:
+    # print help information and exit:
+    print str(err)  # will print something like "option -a not recognized"
+    usage()
+    sys.exit(2)
+
+for o, a in opts:
+    if o in ("-v", "--verbose"):
+        __builtin__.verbose = True
+        scream.ssay('Enabling verbose mode.')
+    elif o in ("-h", "--help"):
+        usage()
+        sys.exit()
+    elif o in ("-t", "--tokens"):
+        auth_with_tokens = (a in ['true', 'True'])
+    elif o in ("-u", "--utf8"):
+        use_utf8 = (a not in ['false', 'False'])
+    elif o in ("-r", "--resume"):
+        resume_on_repo = a
+        scream.ssay('Resume on repo? ' + str(resume_on_repo))
+    elif o in ("-s", "--resumestage"):
+        resume_stage = a
+        scream.ssay('Resume on repo with stage ' + str(resume_stage))
+    elif o in ("-e", "--entity"):
+        resume_entity = a
+        scream.ssay('Resume on stage with entity ' + str(resume_entity))
+
+repos = dict()
+
+'''
+Explanation of an input data, theye are CSV file with data
+retrieved from Google BigQuery consisted of repo name, owner
+and sorted by number of forks and watchers, for analysis we
+take around 32k biggest GitHub repositories
+'''
+file_names = ['by-forks-20028-33', 'by-forks-20028-44',
+              'by-watchers-3391-118', 'by-watchers-129-82',
+              'by-watchers-82-70']
+repos_reported_nonexist = []
 
 
 def output_commit_comments(commit_comments, sha):
@@ -478,23 +498,6 @@ if __name__ == "__main__":
     scream.say('Start main execution')
     scream.say('Welcome to WikiTeams.pl GitHub repo getter!')
     scream.say(version_name)
-
-    secrets = []
-    credential_list = []
-    with open('pass.txt', 'r') as passfile:
-        line__id = 0
-        for line in passfile:
-            line__id += 1
-            secrets.append(line)
-            if line__id % 4 == 0:
-                login_or_token__ = str(secrets[0]).strip()
-                pass_string = str(secrets[1]).strip()
-                client_id__ = str(secrets[2]).strip()
-                client_secret__ = str(secrets[3]).strip()
-                credential_list.append({'login' : login_or_token__ , 'pass' : pass_string , 'client_id' : client_id__ , 'client_secret' : client_secret__})
-                del secrets[:]
-
-    scream.say(str(len(credential_list)) + ' full credentials successfully loaded')
 
     if auth_with_tokens:
         gh = Github(client_id=credential_list[0]['client_id'], client_secret=credential_list[0]['client_secret'])
