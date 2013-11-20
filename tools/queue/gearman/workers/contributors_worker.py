@@ -1,9 +1,16 @@
-import github, worker, time, config
+import github, time,sys
 
-class GitHubWorkerGetContributors(worker.GitHubWorker):
+sys.path.append('../../../../')
+
+from tools.queue.gearman import config
+from tools.queue.gearman.task import Task
+from tools.queue.gearman.workers.worker import GitHubWorker
+
+
+class GitHubWorkerGetContributors(GitHubWorker):
     def starter(self):
         self.worker.set_client_id('github_worker')
-        self.worker.register_task('contributors', self.consume)
+        self.worker.register_task(Task.GET_CONTRIBUTORS, self.consume)
         print 'Starting GetContributors worker...'
 
         self.worker.work()

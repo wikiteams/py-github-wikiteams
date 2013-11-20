@@ -1,6 +1,11 @@
 from gearman import GearmanClient
 
-import psycopg2, github, time
+import psycopg2, sys, time
+
+sys.path.append('../../../../')
+
+from tools.queue.gearman.task import Task
+
 
 class GitHubRepositoryClient():
     db = None
@@ -20,14 +25,21 @@ class GitHubRepositoryClient():
 
     def produce(self):
         cur = self.db.cursor()
-        cur.execute("SELECT owner, name FROM public.repositories LIMIT 100")
+        cur.execute("SELECT owner, name FROM public.repositories ORDER BY id")
 
         repositories = cur.fetchall()
 
         for repository in repositories:
             repositoryName = '%s/%s' % (repository[0], repository[1])
-            print repositoryName
-            self.client.submit_job('contributors', repositoryName, background=True)
+            print "\n\nAdding tasks for %s repository..." % repositoryName
+
+            print 'Adding get contributors task...'
+            self.client.submit_job(Task.GET_CONTRIBUTORS, repositoryName, background=True)
+
+            print 'Adding get languages task...'
+            self.client.submit_job(Task.GET_LANGUAGES, repositoryName, background=True)
+
+            time.sleep(1)
 
 if __name__ == "__main__":
     producer = GitHubRepositoryClient()

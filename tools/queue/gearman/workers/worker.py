@@ -37,5 +37,10 @@ class GitHubWorker(threading.Thread):
         self.worker.work()
 
 
+    def after_poll(self, any_activity):
+        print 'Continue'
+        return True
+
+
     def consume(self, gearman_worker, gearman_job):
         pass
