@@ -1,10 +1,13 @@
-from gearman import GearmanWorker
+import psycopg2, threading, github
 
-import psycopg2, threading
+from gearman import GearmanWorker
+from tools.queue.gearman import config
 
 class GitHubWorker(threading.Thread):
     def __init__(self, threadID):
         self.threadID = threadID
+        self.gh = github.Github(config.TOKEN)
+
         threading.Thread.__init__(self)
         self.daemon = True
 
