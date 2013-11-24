@@ -1,0 +1,4 @@
+# syntax: screen -t label order command
+screen -t getContributors python ./repository_client.py 0
+screen -t getContributors python ./contributors_worker.py 1
+screen -t getLanguages python ./languages_worker.py 2

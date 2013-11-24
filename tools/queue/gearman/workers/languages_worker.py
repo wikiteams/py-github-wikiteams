@@ -1,5 +1,8 @@
+#!/usr/bin/env python
+
 import github, time,sys
 
+sys.path.append('./')
 sys.path.append('../../../../')
 
 from models.repository import Repository
@@ -35,18 +38,23 @@ class GitHubWorkerGetLanguages(GitHubWorker):
                 print 'Try to add link repository %s with language %s ...' % (gearman_job.data, language)
                 bytes = languages[language]
                 Repository.add_language(dbRepository[0], dbLanguage[0], bytes)
+        except github.GithubException as err:
+            self.show_time_rate_limit()
 
-            return 'ok'
-        except Exception as err:
-            print err.message
-            self.worker.send_job_failure(gearman_job)
+            self.switch_token()
+
+            #retry
+            self.retry(Task.GET_LANGUAGES, gearman_job.data)
 
             return 'error'
+        else:
+            return 'ok'
+
 
 if __name__ == "__main__":
     threads = []
 
-    for num in range(0, config.NUMBER_OF_THREADS):
+    for num in xrange(0, config.NUMBER_OF_THREADS):
         threads.append(GitHubWorkerGetLanguages(num).start())
 
     #main loop

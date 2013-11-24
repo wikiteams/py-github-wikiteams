@@ -1,12 +1,17 @@
-import psycopg2, threading, github
+import threading, github
 
+from pytz import timezone
 from gearman import GearmanWorker
+from gearman.client import GearmanClient
 from tools.queue.gearman import config
 
 class GitHubWorker(threading.Thread):
     def __init__(self, threadID):
         self.threadID = threadID
-        self.gh = github.Github(config.TOKEN)
+        self.tokenIndex = threadID
+
+        # na kazdy watek osobny token
+        self.gh = github.Github(config.TOKENS[self.tokenIndex])
 
         threading.Thread.__init__(self)
         self.daemon = True
@@ -20,30 +25,45 @@ class GitHubWorker(threading.Thread):
 
     def setup(self):
         self.connect_gearman()
-        self.open_db()
 
 
     def connect_gearman(self):
         self.worker = GearmanWorker(['localhost:4730'])
 
 
-    def open_db(self):
-        self.db = psycopg2.connect(database='wikiteams', user='wikiteams', password='wikiteams', host='localhost')
-
-
-    def starter(self):
-        self.worker.set_client_id('github_worker')
-        self.worker.register_task('contributors', self.consume)
-
-        print 'Thread %s waiting for new tasks...' % self.threadID
-
-        self.worker.work()
-
-
     def after_poll(self, any_activity):
         print 'Continue'
         return True
 
+    def show_time_rate_limit(self):
+        warsaw = timezone('Europe/Warsaw')
+        rateDateTime = warsaw.localize(self.gh.get_rate_limit().rate.reset)
+        rateDateTime = rateDateTime + rateDateTime.utcoffset()
+        print 'Rate limit to: %s' % rateDateTime
+
+    def switch_token(self):
+        tokens = len(config.TOKENS)
+
+        if self.tokenIndex < tokens - 1:
+            self.tokenIndex += 1
+        else:
+            self.tokenIndex = 0
+
+        print "Switched to token: %s" % self.tokenIndex
+
+        self.gh = github.Github(config.TOKENS[self.tokenIndex])
+
+    def retry(self, name, data):
+        print 'Adding retry job...'
+        client = GearmanClient(['localhost:4730'])
+        client.submit_job(name, data, background=True, max_retries=10)
+        del client
+
+    def starter(self):
+        # todo: raise an exception
+        pass
+
 
     def consume(self, gearman_worker, gearman_job):
+        # todo: raise an exception
         pass

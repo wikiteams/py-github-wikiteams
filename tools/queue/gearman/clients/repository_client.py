@@ -1,7 +1,10 @@
-from gearman import GearmanClient
+#!/usr/bin/env python
 
 import psycopg2, sys, time
 
+from gearman import GearmanClient
+
+sys.path.append('./')
 sys.path.append('../../../../')
 
 from tools.queue.gearman.task import Task
@@ -34,10 +37,13 @@ class GitHubRepositoryClient():
             print "\n\nAdding tasks for %s repository..." % repositoryName
 
             print 'Adding get contributors task...'
-            self.client.submit_job(Task.GET_CONTRIBUTORS, repositoryName, background=True)
+            self.client.submit_job(Task.GET_CONTRIBUTORS, repositoryName, background=True, max_retries=10)
 
             print 'Adding get languages task...'
-            self.client.submit_job(Task.GET_LANGUAGES, repositoryName, background=True)
+            self.client.submit_job(Task.GET_LANGUAGES, repositoryName, background=True, max_retries=10)
+
+            print 'Adding get commits task...'
+            self.client.submit_job(Task.GET_COMMITS, repositoryName, background=True, max_retries=10)
 
             time.sleep(1)
 
