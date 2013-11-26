@@ -39,12 +39,13 @@ class GitHubWorkerGetLanguages(GitHubWorker):
                 bytes = languages[language]
                 Repository.add_language(dbRepository[0], dbLanguage[0], bytes)
         except github.GithubException as err:
-            self.show_time_rate_limit()
+            resetRateDate = self.gh.get_rate_limit().rate.reset
+            self.show_time_rate_limit(resetRateDate)
 
             self.switch_token()
 
             #retry
-            self.retry(Task.GET_LANGUAGES, gearman_job.data)
+            self.retry(Task.GET_LANGUAGES, gearman_job.data, future_date=resetRateDate)
 
             return 'error'
         else:

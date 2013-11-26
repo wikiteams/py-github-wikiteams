@@ -1,4 +1,4 @@
-import threading, github
+import threading, github, datetime
 
 from pytz import timezone
 from gearman import GearmanWorker
@@ -35,9 +35,9 @@ class GitHubWorker(threading.Thread):
         print 'Continue'
         return True
 
-    def show_time_rate_limit(self):
+    def show_time_rate_limit(self, date):
         warsaw = timezone('Europe/Warsaw')
-        rateDateTime = warsaw.localize(self.gh.get_rate_limit().rate.reset)
+        rateDateTime = warsaw.localize(date)
         rateDateTime = rateDateTime + rateDateTime.utcoffset()
         print 'Rate limit to: %s' % rateDateTime
 
@@ -53,10 +53,16 @@ class GitHubWorker(threading.Thread):
 
         self.gh = github.Github(config.TOKENS[self.tokenIndex])
 
-    def retry(self, name, data):
-        print 'Adding retry job...'
+    def retry(self, name, data, future_date=None):
+        if future_date is not None:
+            when_to_run = (future_date + datetime.timedelta(seconds=60) - datetime.datetime.utcnow()).seconds
+        else:
+            when_to_run = None
+
+        print 'Retry job in %s seconds' % when_to_run
+
         client = GearmanClient(['localhost:4730'])
-        client.submit_job(name, data, background=True, max_retries=10)
+        client.submit_job(name, data, max_retries=10, when_to_run=when_to_run)
         del client
 
     def starter(self):

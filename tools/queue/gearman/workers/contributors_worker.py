@@ -39,12 +39,13 @@ class GitHubWorkerGetContributors(GitHubWorker):
                 print 'Try to add link repository %s with user %s ...' % (gearman_job.data, ghContributor.login)
                 Repository.add_contributor(dbRepository[0], ghContributor.id)
         except github.GithubException as err:
-            self.show_time_rate_limit()
+            resetRateDate = self.gh.get_rate_limit().rate.reset
+            self.show_time_rate_limit(resetRateDate)
 
             self.switch_token()
 
             #retry
-            self.retry(Task.GET_CONTRIBUTORS, gearman_job.data)
+            self.retry(Task.GET_CONTRIBUTORS, gearman_job.data, future_date=resetRateDate)
 
             return 'error'
         else:

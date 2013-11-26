@@ -38,12 +38,13 @@ class GitHubWorkerGetCommits(GitHubWorker):
                 # todo: add fetching commit comments
 
         except github.GithubException as err:
-            self.show_time_rate_limit()
+            resetRateDate = self.gh.get_rate_limit().rate.reset
+            self.show_time_rate_limit(resetRateDate)
 
             self.switch_token()
 
             #retry
-            self.retry(Task.GET_COMMITS, gearman_job.data)
+            self.retry(Task.GET_COMMITS, gearman_job.data, future_date=resetRateDate)
 
             return 'error'
         else:
