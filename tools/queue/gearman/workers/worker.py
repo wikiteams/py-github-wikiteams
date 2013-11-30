@@ -1,9 +1,10 @@
-import threading, github, datetime
+import threading, github, datetime, json
 
 from pytz import timezone
 from gearman import GearmanWorker
 from gearman.client import GearmanClient
 from tools.queue.gearman import config
+from lib.logger import logger
 
 class GitHubWorker(threading.Thread):
     def __init__(self, threadID):
@@ -54,14 +55,30 @@ class GitHubWorker(threading.Thread):
 
         self.gh = github.Github(config.TOKENS[self.tokenIndex])
 
-    def retry(self, name, data, future_date=None):
+    def retry(self, name, data, future_date=None, priority=None, increment_attempts=True):
         if future_date is not None:
             when_to_run = (future_date + datetime.timedelta(seconds=60) - datetime.datetime.utcnow()).seconds
         else:
             when_to_run = None
 
-        print 'Retry job in %s seconds' % when_to_run
-        self.client.submit_job(name, data, max_retries=10, when_to_run=when_to_run)
+        if when_to_run is None and priority is not None:
+            background = True
+        else:
+            background = False
+
+        if increment_attempts:
+            data['attempts']  = int(data['attempts']) + 1
+
+        if data['attempts'] < 10:
+            if when_to_run is not None:
+                print 'Retry current job in %s seconds' % when_to_run
+            else:
+                print 'Retry current job with priority %s' % priority
+
+            self.client.submit_job(name, json.dumps(data), max_retries=10, when_to_run=when_to_run, priority=priority, background=background)
+        else:
+            print 'To many attempts... omitting job'
+            logger.warning('To many attempts... omitting job')
 
     def starter(self):
         # todo: raise an exception

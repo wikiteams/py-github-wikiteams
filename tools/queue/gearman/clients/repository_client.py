@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import psycopg2, sys, time
+import psycopg2, sys, time, json
 
 from gearman import GearmanClient
 
@@ -34,16 +34,28 @@ class GitHubRepositoryClient():
 
         for repository in repositories:
             repositoryName = '%s/%s' % (repository[0], repository[1])
+
+            data = {
+                'repositoryName': repositoryName,
+                'attempts': 0
+            }
+
             print "\n\nAdding tasks for %s repository..." % repositoryName
 
             print 'Adding get contributors task...'
-            self.client.submit_job(Task.GET_CONTRIBUTORS, repositoryName, background=True, max_retries=10)
+            self.client.submit_job(Task.GET_CONTRIBUTORS, json.dumps(data), background=True, max_retries=10)
 
             print 'Adding get languages task...'
-            self.client.submit_job(Task.GET_LANGUAGES, repositoryName, background=True, max_retries=10)
+            self.client.submit_job(Task.GET_LANGUAGES, json.dumps(data), background=True, max_retries=10)
+
+            print 'Adding get repository readme task...'
+            self.client.submit_job(Task.GET_REPOSITORY_README, json.dumps(data), background=True, max_retries=10)
+
+            print 'Adding get issues task...'
+            self.client.submit_job(Task.GET_ISSUES, json.dumps(data), background=True, max_retries=10)
 
             print 'Adding get commits task...'
-            self.client.submit_job(Task.GET_COMMITS, repositoryName, background=True, max_retries=10)
+            self.client.submit_job(Task.GET_COMMITS, json.dumps(data), background=True, max_retries=10)
 
             time.sleep(1)
 

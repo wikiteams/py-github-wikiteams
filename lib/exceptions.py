@@ -1,0 +1,2 @@
+class WikiTeamsNotFoundException(Exception):
+    pass

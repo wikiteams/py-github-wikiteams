@@ -1,8 +1,23 @@
 import psycopg2
 from lib.db import Database
+from lib.exceptions import WikiTeamsNotFoundException
 from lib.logger import logger
 
 class User():
+    @staticmethod
+    def get(id):
+        db = Database()
+        db.connection.autocommit = True
+        cur = db.connection.cursor()
+
+        sql = "SELECT * FROM public.users WHERE id = %s ORDER BY fetched_at DESC LIMIT 1" % id
+        cur.execute(sql)
+
+        dbContributor = cur.fetchone()
+
+        return dbContributor
+
+
     @staticmethod
     def add_or_update(data):
         db = Database()
@@ -71,10 +86,14 @@ class User():
 
             cur.execute(sql, ghData)
             db.connection.commit()
+
+            return User.get(ghData['id'])
         except psycopg2.IntegrityError as err:
-            print 'User exists!'
             logger.error("(%s) %s" % (__name__, str(err)))
 
+            print 'User exists!'
+
+            print 'Try to update user...'
             sql = "UPDATE public.users SET " \
                   "login = %(login)s, " \
                   "name = %(name)s, " \
@@ -114,14 +133,9 @@ class User():
 
             cur.execute(sql, ghData)
 
+            return User.get(ghData['id'])
+
         except Exception as err:
             print 'Unknown error occurred'
             logger.error("(%s) %s" % (__name__, str(err)))
-
-        finally:
-            sql = "SELECT * FROM public.users WHERE id = %(id)s ORDER BY fetched_at DESC LIMIT 1"
-            cur.execute(sql, ghData)
-
-            dbContributor = cur.fetchone()
-
-            return dbContributor
+            raise

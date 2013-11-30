@@ -1,8 +1,22 @@
 import psycopg2, datetime
 from lib.db import Database
+from lib.exceptions import WikiTeamsNotFoundException
 from lib.logger import logger
 
 class Commit():
+    @staticmethod
+    def get(sha, repository_id):
+        db = Database()
+        db.connection.autocommit = True
+        cur = db.connection.cursor()
+
+        sql = "SELECT * FROM public.commits WHERE sha = %s AND repository_id = %s ORDER BY fetched_at DESC LIMIT 1"
+        cur.execute(sql, (sha, repository_id))
+
+        dbCommit = cur.fetchone()
+        return dbCommit
+
+
     @staticmethod
     def add(commit, repositoryId):
         db = Database()
@@ -24,17 +38,25 @@ class Commit():
             sql = "INSERT INTO public.commits (sha, repository_id, author_id, committer_id, message, additions, deletions) " \
                   "VALUES (%(sha)s, %(repository_id)s, %(author_id)s, %(committer_id)s, %(message)s, %(additions)s, %(deletions)s)"
             cur.execute(sql, ghData)
+
+            return Commit.get(ghData['sha'], ghData['repository_id'])
+
         except psycopg2.IntegrityError as err:
-            print 'Commits exists!'
             logger.error("(%s) %s" % (__name__, str(err)))
+
+            if 'is not present in table' in str(err):
+                print 'Object does not exist'
+
+                if 'author_id' in str(err):
+                    raise WikiTeamsNotFoundException('Author not found')
+                elif 'committer_id' in str(err):
+                    raise WikiTeamsNotFoundException('Committer not found')
+            else:
+                print 'Commits exists!'
+
+                return Commit.get(ghData['sha'], ghData['repository_id'])
 
         except Exception as err:
             print 'Unknown error occurred'
             logger.error("(%s) %s" % (__name__, str(err)))
-        finally:
-            sql = "SELECT * FROM public.commits WHERE sha = %(sha)s AND repository_id = %(repository_id)s ORDER BY fetched_at DESC LIMIT 1"
-            cur.execute(sql, ghData)
-
-            dbCommit = cur.fetchone()
-
-            return dbCommit
+            raise
