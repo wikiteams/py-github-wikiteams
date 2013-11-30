@@ -1,5 +1,6 @@
 import psycopg2
 from lib.db import Database
+from lib.logger import logger
 
 class Repository():
     @staticmethod
@@ -26,9 +27,10 @@ class Repository():
             cur.execute(sql)
         except psycopg2.IntegrityError as err:
             print 'Just linked!'
+            logger.error("(%s) %s" % (__name__, str(err)))
         except Exception as err:
-            print 'Error: '
-            print err
+            print 'Unknown error occurred'
+            logger.error("(%s) %s" % (__name__, str(err)))
 
 
     @staticmethod
@@ -41,6 +43,7 @@ class Repository():
             cur.execute(sql)
         except psycopg2.IntegrityError as err:
             print 'Just linked!'
+            logger.error("(%s) %s" % (__name__, str(err)))
         except Exception as err:
-            print 'Error: '
-            print err
+            print 'Unknown error occurred'
+            logger.error("(%s) %s" % (__name__, str(err)))

@@ -29,6 +29,7 @@ class GitHubWorker(threading.Thread):
 
     def connect_gearman(self):
         self.worker = GearmanWorker(['localhost:4730'])
+        self.client = GearmanClient(['localhost:4730'])
 
 
     def after_poll(self, any_activity):
@@ -60,10 +61,7 @@ class GitHubWorker(threading.Thread):
             when_to_run = None
 
         print 'Retry job in %s seconds' % when_to_run
-
-        client = GearmanClient(['localhost:4730'])
-        client.submit_job(name, data, max_retries=10, when_to_run=when_to_run)
-        del client
+        self.client.submit_job(name, data, max_retries=10, when_to_run=when_to_run)
 
     def starter(self):
         # todo: raise an exception

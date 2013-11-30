@@ -1,5 +1,6 @@
 import psycopg2
 from lib.db import Database
+from lib.logger import logger
 
 class User():
     @staticmethod
@@ -72,6 +73,7 @@ class User():
             db.connection.commit()
         except psycopg2.IntegrityError as err:
             print 'User exists!'
+            logger.error("(%s) %s" % (__name__, str(err)))
 
             sql = "UPDATE public.users SET " \
                   "login = %(login)s, " \
@@ -113,11 +115,11 @@ class User():
             cur.execute(sql, ghData)
 
         except Exception as err:
-            print 'Error: '
-            print err.message
+            print 'Unknown error occurred'
+            logger.error("(%s) %s" % (__name__, str(err)))
 
         finally:
-            sql = "SELECT * FROM public.users WHERE id = %(id)s"
+            sql = "SELECT * FROM public.users WHERE id = %(id)s ORDER BY fetched_at DESC LIMIT 1"
             cur.execute(sql, ghData)
 
             dbContributor = cur.fetchone()

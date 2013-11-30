@@ -8,38 +8,38 @@ sys.path.append('../../../../')
 from lib.logger import logger
 
 from models.repository import Repository
-from models.language import Language
+from models.commit_comment import CommitComment
 
 from tools.queue.gearman import config
 from tools.queue.gearman.task import Task
 from tools.queue.gearman.workers.worker import GitHubWorker
 
-class GitHubWorkerGetLanguages(GitHubWorker):
+class GitHubWorkerGetCommitComments(GitHubWorker):
     def starter(self):
-        self.worker.set_client_id(Task.GET_LANGUAGES + '_' + str(self.threadID))
-        self.worker.register_task(Task.GET_LANGUAGES, self.consume)
+        self.worker.set_client_id(Task.GET_COMMIT_COMMENTS + '_' + str(self.threadID))
+        self.worker.register_task(Task.GET_COMMIT_COMMENTS, self.consume)
 
-        print 'Starting GetLanguages worker...'
+        print 'Starting GetCommitComments worker...'
         self.worker.work()
 
     def consume(self, gearman_worker, gearman_job):
         try:
-            (owner, name) = gearman_job.data.split('/')
+            (repositoryName, commitSHA) = gearman_job.data.split(':')
+            (owner, name) =  repositoryName.split('/')
 
-            ghRepository = self.gh.get_repo(gearman_job.data)
+            ghRepository = self.gh.get_repo(repositoryName)
             dbRepository = Repository.get(owner, name)
 
-            languages = ghRepository.get_languages()
+            commit = ghRepository.get_commit(commitSHA)
+            comments = commit.get_comments()
 
-            for language in languages.keys():
-                print '%s - %s' % (self.threadID, language)
+            for comment in comments:
+                print '%s - %s' % (self.threadID, str(commit.sha))
 
-                print 'Try to add new language - %s ...' % language
-                dbLanguage = Language.add(language)
+                print 'Try to add new commit comment - %s ...' % commit.sha
+                dbCommitComment = CommitComment.add(dbRepository[0], comment)
 
-                print 'Try to add link repository %s with language %s ...' % (gearman_job.data, language)
-                bytes = languages[language]
-                Repository.add_language(dbRepository[0], dbLanguage[0], bytes)
+                # todo: add fetching commit comments
         except github.UnknownObjectException as err:
             print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
             logger.error("(%s) %s" % (__name__, str(err)))
@@ -54,7 +54,7 @@ class GitHubWorkerGetLanguages(GitHubWorker):
             self.switch_token()
 
             #retry
-            self.retry(Task.GET_LANGUAGES, gearman_job.data, future_date=resetRateDate)
+            self.retry(Task.GET_COMMITS, gearman_job.data, future_date=resetRateDate)
 
             return 'error'
         except Exception as err:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     threads = []
 
     for num in xrange(0, config.NUMBER_OF_THREADS):
-        threads.append(GitHubWorkerGetLanguages(num).start())
+        threads.append(GitHubWorkerGetCommitComments(num).start())
 
     #main loop
     while True:

@@ -5,6 +5,8 @@ import github, time,sys
 sys.path.append('./')
 sys.path.append('../../../../')
 
+from lib.logger import logger
+
 from models.user import User
 from models.repository import Repository
 from tools.queue.gearman import config
@@ -38,7 +40,14 @@ class GitHubWorkerGetContributors(GitHubWorker):
 
                 print 'Try to add link repository %s with user %s ...' % (gearman_job.data, ghContributor.login)
                 Repository.add_contributor(dbRepository[0], ghContributor.id)
+        except github.UnknownObjectException as err:
+            print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
+            logger.error("(%s) %s" % (__name__, str(err)))
+            return 'ok'
+
         except github.GithubException as err:
+            logger.error("(%s) %s" % (__name__, str(err)))
+
             resetRateDate = self.gh.get_rate_limit().rate.reset
             self.show_time_rate_limit(resetRateDate)
 
@@ -46,6 +55,11 @@ class GitHubWorkerGetContributors(GitHubWorker):
 
             #retry
             self.retry(Task.GET_CONTRIBUTORS, gearman_job.data, future_date=resetRateDate)
+
+            return 'error'
+        except Exception as err:
+            print 'Unknown error occurred'
+            logger.error("(%s) %s" % (__name__, str(err)))
 
             return 'error'
         else:

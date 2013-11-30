@@ -5,6 +5,8 @@ import github, time,sys
 sys.path.append('./')
 sys.path.append('../../../../')
 
+from lib.logger import logger
+
 from models.repository import Repository
 from models.commit import Commit
 
@@ -35,9 +37,19 @@ class GitHubWorkerGetCommits(GitHubWorker):
                 print 'Try to add new commit - %s ...' % commit.sha
                 dbCommit = Commit.add(commit, dbRepository[0])
 
+                print 'Adding get commit comments task...'
+                self.client.submit_job(Task.GET_COMMIT_COMMENTS, gearman_job.data+':'+str(commit.sha), background=True, max_retries=10)
+
                 # todo: add fetching commit comments
+        except github.UnknownObjectException as err:
+            print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
+            logger.error("(%s) %s" % (__name__, str(err)))
+
+            return 'ok'
 
         except github.GithubException as err:
+            logger.error("(%s) %s" % (__name__, str(err)))
+
             resetRateDate = self.gh.get_rate_limit().rate.reset
             self.show_time_rate_limit(resetRateDate)
 
@@ -45,6 +57,11 @@ class GitHubWorkerGetCommits(GitHubWorker):
 
             #retry
             self.retry(Task.GET_COMMITS, gearman_job.data, future_date=resetRateDate)
+
+            return 'error'
+        except Exception as err:
+            print 'Unknown error occurred'
+            logger.error("(%s) %s" % (__name__, str(err)))
 
             return 'error'
         else:
