@@ -5,8 +5,8 @@ CREATE TABLE readmes
   content text,
   fetched_at date NOT NULL DEFAULT now(),
   CONSTRAINT readmes_pkey PRIMARY KEY (repository_id, fetched_at),
-  CONSTRAINT r_repositoryfk FOREIGN KEY (repository_id, fetched_at)
-      REFERENCES languages (id, fetched_at) MATCH SIMPLE
+  CONSTRAINT r_repositoryfk FOREIGN KEY (repository_id)
+      REFERENCES repositories (id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE
 )
 WITH (
