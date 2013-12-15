@@ -36,7 +36,11 @@ CREATE TABLE users
   created_at character varying(200) NOT NULL,
   updated_at character varying(200) NOT NULL,
   fetched_at date NOT NULL DEFAULT now(),
-  CONSTRAINT users_pkey PRIMARY KEY (id, fetched_at)
+  run_id integer NOT NULL,
+  CONSTRAINT users_pkey PRIMARY KEY (id, run_id),
+  CONSTRAINT u_runfk FOREIGN KEY (run_id)
+      REFERENCES runs (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
 )
 WITH (
   OIDS=FALSE

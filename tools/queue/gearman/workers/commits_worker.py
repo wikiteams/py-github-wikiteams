@@ -28,6 +28,7 @@ class GitHubWorkerGetCommits(GitHubWorker):
         data = json.loads(gearman_job.data)
 
         try:
+            runId = data['runId']
             (owner, name) = data['repositoryName'].split('/')
             logger.info("Getting commits for repository %s" % data['repositoryName'])
 
@@ -40,18 +41,20 @@ class GitHubWorkerGetCommits(GitHubWorker):
                 print '%s - %s' % (self.threadID, commit.sha)
 
                 print 'Try to add new commit - %s ...' % commit.sha
-                dbCommit = Commit.add(commit, dbRepository[0])
+                dbCommit = Commit.add(commit, dbRepository[0], runId)
 
-                commitCommentData = {
-                    'repositoryName': data['repositoryName'],
-                    'commitSHA': commit.sha,
-                    'attempts': 0
-                }
+                if dbCommit is not None:
+                    commitCommentData = {
+                        'runId': runId,
+                        'repositoryName': data['repositoryName'],
+                        'commitSHA': commit.sha,
+                        'attempts': 0
+                    }
 
-                print 'Adding get commit comments task...'
-                self.client.submit_job(Task.GET_COMMIT_COMMENTS, json.dumps(commitCommentData), background=True, max_retries=10)
+                    print 'Adding get commit comments task...'
+                    self.client.submit_job(Task.GET_COMMIT_COMMENTS, json.dumps(commitCommentData), background=True, max_retries=10)
 
-                # todo: add fetching commit comments
+                print self.gh.rate_limiting
 
         except github.UnknownObjectException as err:
             print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
@@ -70,12 +73,17 @@ class GitHubWorkerGetCommits(GitHubWorker):
             #retry
             self.retry(Task.GET_COMMITS, data, future_date=resetRateDate, increment_attempts=False)
 
+            sleepTime = self.get_time_diff_in_seconds(resetRateDate)
+            print 'Worker %s going to sleep for %s seconds [%s]' % (self.threadID, sleepTime, resetRateDate)
+            time.sleep(sleepTime)
+
             return 'error'
 
         except WikiTeamsNotFoundException as err:
             logger.error("(%s) %s" % (__name__, str(err)))
 
             contributorsData = {
+                'runId': data['runId'],
                 'repositoryName': data['repositoryName'],
                 'attempts': 0
             }

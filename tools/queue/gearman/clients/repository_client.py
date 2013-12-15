@@ -27,7 +27,13 @@ class GitHubRepositoryClient():
         self.db = psycopg2.connect(database='wikiteams', user='wikiteams', password='wikiteams', host='localhost')
 
     def produce(self):
+        self.db.autocommit = True
         cur = self.db.cursor()
+
+        cur.execute("INSERT INTO public.runs (id, added_at) VALUES(DEFAULT, NOW()) returning id")
+
+        runId = cur.fetchone()
+
         cur.execute("SELECT owner, name FROM public.repositories ORDER BY id")
 
         repositories = cur.fetchall()
@@ -36,6 +42,7 @@ class GitHubRepositoryClient():
             repositoryName = '%s/%s' % (repository[0], repository[1])
 
             data = {
+                'runId': runId[0],
                 'repositoryName': repositoryName,
                 'attempts': 0
             }
@@ -56,8 +63,6 @@ class GitHubRepositoryClient():
 
             print 'Adding get commits task...'
             self.client.submit_job(Task.GET_COMMITS, json.dumps(data), background=True, max_retries=10)
-
-            time.sleep(1)
 
 if __name__ == "__main__":
     producer = GitHubRepositoryClient()

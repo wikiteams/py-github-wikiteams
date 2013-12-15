@@ -53,11 +53,14 @@ class GitHubWorker(threading.Thread):
 
         print "Switched to token: %s" % self.tokenIndex
 
-        self.gh = github.Github(config.TOKENS[self.tokenIndex])
+        self.gh = github.Github(config.TOKENS[self.tokenIndex], per_page=100, timeout=90)
+
+    def get_time_diff_in_seconds(self, future_date):
+        return (future_date + datetime.timedelta(seconds=60) - datetime.datetime.utcnow()).seconds
 
     def retry(self, name, data, future_date=None, priority=None, increment_attempts=True):
         if future_date is not None:
-            when_to_run = (future_date + datetime.timedelta(seconds=60) - datetime.datetime.utcnow()).seconds
+            when_to_run = self.get_time_diff_in_seconds(future_date)
         else:
             when_to_run = None
 

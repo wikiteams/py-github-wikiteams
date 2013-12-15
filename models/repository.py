@@ -19,12 +19,12 @@ class Repository():
 
 
     @staticmethod
-    def add_language(repositoryId, languageId, bytes):
+    def add_language(repositoryId, languageId, runId, bytes):
         db = Database()
         cur = db.connection.cursor()
 
         try:
-            sql = "INSERT INTO public.repositories_languages (repository_id, language_id, bytes) VALUES (%s, %s, %s)" % (repositoryId, languageId, bytes)
+            sql = "INSERT INTO public.repositories_languages (repository_id, language_id, run_id, bytes) VALUES (%s, %s, %s, %s)" % (repositoryId, languageId, runId, bytes)
             cur.execute(sql)
         except psycopg2.IntegrityError as err:
             logger.error("(%s) %s" % (__name__, str(err)))
@@ -42,12 +42,12 @@ class Repository():
 
 
     @staticmethod
-    def add_contributor(repositoryId, userId):
+    def add_contributor(repositoryId, userId, runId):
         db = Database()
         cur = db.connection.cursor()
 
         try:
-            sql = "INSERT INTO public.repositories_users (repository_id, user_id) VALUES (%s, %s)" % (repositoryId, userId)
+            sql = "INSERT INTO public.repositories_users (repository_id, user_id, run_id) VALUES (%s, %s, %s)" % (repositoryId, userId, runId)
             cur.execute(sql)
         except psycopg2.IntegrityError as err:
             logger.error("(%s) %s" % (__name__, str(err)))

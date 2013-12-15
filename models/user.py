@@ -10,7 +10,7 @@ class User():
         db.connection.autocommit = True
         cur = db.connection.cursor()
 
-        sql = "SELECT * FROM public.users WHERE id = %s ORDER BY fetched_at DESC LIMIT 1" % id
+        sql = "SELECT * FROM public.users WHERE id = %s ORDER BY run_id DESC LIMIT 1" % id
         cur.execute(sql)
 
         dbContributor = cur.fetchone()
@@ -19,7 +19,7 @@ class User():
 
 
     @staticmethod
-    def add_or_update(data):
+    def add_or_update(data, runId):
         db = Database()
         db.connection.autocommit = True
         cur = db.connection.cursor()
@@ -68,6 +68,8 @@ class User():
                 'created_at': data.created_at,
                 'updated_at': data.updated_at,
 
+                'run_id': runId
+
                 #'plan': data.plan,
             }
 
@@ -75,14 +77,14 @@ class User():
                   "gravatar_id, hireable, followers, following, collaborators, contributions, public_repos, " \
                   "owned_private_repos, total_private_repos, public_gists, private_gists, url, avatar_url, events_url, " \
                   "followers_url, following_url, gists_url, html_url, organizations_url, received_events_url, repos_url, " \
-                  "starred_url, subscriptions_url, created_at, updated_at)" \
+                  "starred_url, subscriptions_url, created_at, updated_at, run_id)" \
                   "VALUES (%(id)s, %(login)s, %(name)s, %(type)s, %(email)s, %(location)s, %(company)s, %(bio)s, " \
                   "%(blog)s, %(disk_usage)s, %(gravatar_id)s, %(hireable)s, %(followers)s, %(following)s, " \
                   "%(collaborators)s, %(contributions)s, %(public_repos)s, %(owned_private_repos)s, " \
                   "%(total_private_repos)s, %(public_gists)s, %(private_gists)s, %(url)s, %(avatar_url)s, " \
                   "%(events_url)s, %(followers_url)s, %(following_url)s, %(gists_url)s, %(html_url)s, " \
                   "%(organizations_url)s, %(received_events_url)s, %(repos_url)s, %(starred_url)s, %(subscriptions_url)s, " \
-                  "%(created_at)s, %(updated_at)s)"
+                  "%(created_at)s, %(updated_at)s, %(run_id)s)"
 
             cur.execute(sql, ghData)
             db.connection.commit()

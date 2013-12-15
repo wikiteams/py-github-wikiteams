@@ -28,6 +28,7 @@ class GitHubWorkerGetLanguages(GitHubWorker):
         data = json.loads(gearman_job.data)
 
         try:
+            runId = data['runId']
             (owner, name) = data['repositoryName'].split('/')
             logger.info("Getting languages for repository %s" % data['repositoryName'])
 
@@ -40,12 +41,14 @@ class GitHubWorkerGetLanguages(GitHubWorker):
                 print '%s - %s' % (self.threadID, language)
 
                 print 'Try to add new language - %s ...' % language
-                dbLanguage = Language.add(language)
+                dbLanguage = Language.add(language, runId)
 
                 print 'Try to add link repository %s with language %s ...' % (data['repositoryName'], language)
 
                 bytes = languages[language]
-                Repository.add_language(dbRepository[0], dbLanguage[0], bytes)
+                Repository.add_language(dbRepository[0], dbLanguage[0], runId, bytes)
+
+                print self.gh.rate_limiting
         except github.UnknownObjectException as err:
             print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
             logger.error("(%s) %s" % (__name__, str(err)))

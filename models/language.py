@@ -10,20 +10,20 @@ class Language():
         db.connection.autocommit = True
         cur = db.connection.cursor()
 
-        sql = "SELECT * FROM public.languages WHERE name = '%s' ORDER BY fetched_at DESC LIMIT 1" % language
+        sql = "SELECT * FROM public.languages WHERE name = '%s' ORDER BY run_id DESC LIMIT 1" % language
         cur.execute(sql)
 
         dbLanguage = cur.fetchone()
         return dbLanguage
 
     @staticmethod
-    def add(language):
+    def add(language, runId):
         db = Database()
         db.connection.autocommit = True
         cur = db.connection.cursor()
 
         try:
-            sql = "INSERT INTO public.languages (id, name) VALUES (DEFAULT, '%s')" % language
+            sql = "INSERT INTO public.languages (id, name, run_id) VALUES (DEFAULT, '%s', %s)" % (language, runId)
             cur.execute(sql)
 
             return Language.get(language)

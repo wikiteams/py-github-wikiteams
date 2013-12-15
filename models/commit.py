@@ -10,7 +10,7 @@ class Commit():
         db.connection.autocommit = True
         cur = db.connection.cursor()
 
-        sql = "SELECT * FROM public.commits WHERE sha = %s AND repository_id = %s ORDER BY fetched_at DESC LIMIT 1"
+        sql = "SELECT * FROM public.commits WHERE sha = %s AND repository_id = %s ORDER BY run_id DESC LIMIT 1"
         cur.execute(sql, (sha, repository_id))
 
         dbCommit = cur.fetchone()
@@ -18,7 +18,7 @@ class Commit():
 
 
     @staticmethod
-    def add(commit, repositoryId):
+    def add(commit, repositoryId, runId):
         db = Database()
         db.connection.autocommit = True
         cur = db.connection.cursor()
@@ -32,11 +32,12 @@ class Commit():
                 'message':  commit.commit.message,
                 'additions': commit.stats.additions,
                 'deletions': commit.stats.deletions,
-                'fetched_at': datetime.datetime.utcnow()
+                'fetched_at': datetime.datetime.utcnow(),
+                'run_id': runId
             }
 
-            sql = "INSERT INTO public.commits (sha, repository_id, author_id, committer_id, message, additions, deletions) " \
-                  "VALUES (%(sha)s, %(repository_id)s, %(author_id)s, %(committer_id)s, %(message)s, %(additions)s, %(deletions)s)"
+            sql = "INSERT INTO public.commits (sha, repository_id, author_id, committer_id, message, additions, deletions, run_id) " \
+                  "VALUES (%(sha)s, %(repository_id)s, %(author_id)s, %(committer_id)s, %(message)s, %(additions)s, %(deletions)s, %(run_id)s)"
             cur.execute(sql, ghData)
 
             return Commit.get(ghData['sha'], ghData['repository_id'])
@@ -54,7 +55,7 @@ class Commit():
             else:
                 print 'Commits exists!'
 
-                return Commit.get(ghData['sha'], ghData['repository_id'])
+                return None #Commit.get(ghData['sha'], ghData['repository_id'])
 
         except Exception as err:
             print 'Unknown error occurred'

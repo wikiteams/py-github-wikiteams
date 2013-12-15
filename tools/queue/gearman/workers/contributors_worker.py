@@ -28,6 +28,7 @@ class GitHubWorkerGetContributors(GitHubWorker):
         data = json.loads(gearman_job.data)
 
         try:
+            runId = data['runId']
             (owner, name) = data['repositoryName'].split('/')
             logger.info("Getting contributors for repository %s" % data['repositoryName'])
 
@@ -39,12 +40,14 @@ class GitHubWorkerGetContributors(GitHubWorker):
                 print '%s - %s [%s]' % (self.threadID, ghContributor.login, ghContributor.name)
 
                 print 'Try to add new user - %s ...' % ghContributor.login
-                User.add_or_update(ghContributor)
+                User.add_or_update(ghContributor, runId)
 
                 dbRepository = Repository.get(owner, name)
 
                 print 'Try to add link repository %s with user %s ...' % (data['repositoryName'], ghContributor.login)
-                Repository.add_contributor(dbRepository[0], ghContributor.id)
+                Repository.add_contributor(dbRepository[0], ghContributor.id, runId)
+
+                print self.gh.rate_limiting
         except github.UnknownObjectException as err:
             print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
             logger.error("(%s) %s" % (__name__, str(err)))

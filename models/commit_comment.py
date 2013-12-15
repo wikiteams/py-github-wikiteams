@@ -10,7 +10,7 @@ class CommitComment():
         db.connection.autocommit = True
         cur = db.connection.cursor()
 
-        sql = "SELECT * FROM public.commits_comments WHERE id = %s ORDER BY fetched_at DESC LIMIT 1" % id
+        sql = "SELECT * FROM public.commits_comments WHERE id = %s ORDER BY run_id DESC LIMIT 1" % id
         cur.execute(sql)
 
         dbCommit = cur.fetchone()
@@ -19,7 +19,7 @@ class CommitComment():
 
 
     @staticmethod
-    def add(repositoryId, comment):
+    def add(repositoryId, runId, comment):
         db = Database()
         db.connection.autocommit = True
         cur = db.connection.cursor()
@@ -38,11 +38,12 @@ class CommitComment():
                 'html_url': comment.html_url,
                 'created_at': comment.created_at,
                 'updated_at': comment.updated_at,
-                'fetched_at': datetime.datetime.utcnow()
+                'fetched_at': datetime.datetime.utcnow(),
+                'run_id': runId
             }
 
-            sql = "INSERT INTO public.commits_comments (id, commit_id, user_id, repository_id, body, path, line, position, url, html_url, created_at, updated_at) " \
-                  "VALUES (%(id)s, %(commit_id)s, %(user_id)s, %(repository_id)s, %(body)s, %(path)s, %(line)s, %(position)s, %(url)s, %(html_url)s, %(created_at)s, %(updated_at)s)"
+            sql = "INSERT INTO public.commits_comments (id, commit_id, user_id, repository_id, body, path, line, position, url, html_url, created_at, updated_at, run_id) " \
+                  "VALUES (%(id)s, %(commit_id)s, %(user_id)s, %(repository_id)s, %(body)s, %(path)s, %(line)s, %(position)s, %(url)s, %(html_url)s, %(created_at)s, %(updated_at)s, %(run_id)s)"
             cur.execute(sql, ghData)
 
             return CommitComment.get(ghData['id'])

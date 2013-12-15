@@ -28,6 +28,7 @@ class GitHubWorkerGetIssues(GitHubWorker):
         data = json.loads(gearman_job.data)
 
         try:
+            runId = data['runId']
             (owner, name) = data['repositoryName'].split('/')
             logger.info("Getting issues for repository %s" % data['repositoryName'])
 
@@ -56,12 +57,17 @@ class GitHubWorkerGetIssues(GitHubWorker):
             #retry
             self.retry(Task.GET_ISSUES, data, future_date=resetRateDate, increment_attempts=False)
 
+            sleepTime = self.get_time_diff_in_seconds(resetRateDate)
+            print 'Worker %s going to sleep for %s seconds [%s]' % (self.threadID, sleepTime, resetRateDate)
+            time.sleep(sleepTime)
+
             return 'error'
 
         except WikiTeamsNotFoundException as err:
             logger.error("(%s) %s" % (__name__, str(err)))
 
             contributorsData = {
+                'runId': data['runId'],
                 'repositoryName': data['repositoryName'],
                 'attempts': 0
             }

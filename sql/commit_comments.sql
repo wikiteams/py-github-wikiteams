@@ -13,14 +13,18 @@ CREATE TABLE commits_comments
   created_at timestamp without time zone,
   updated_at timestamp without time zone,
   fetched_at date NOT NULL DEFAULT now(),
-  CONSTRAINT commits_comment_pkey PRIMARY KEY (id, commit_id, user_id, fetched_at),
-  CONSTRAINT cc_commitfk FOREIGN KEY (commit_id, repository_id, fetched_at)
-      REFERENCES commits (sha, repository_id, fetched_at) MATCH SIMPLE
+  run_id integer NOT NULL,
+  CONSTRAINT commits_comment_pkey PRIMARY KEY (id, commit_id, user_id, run_id),
+  CONSTRAINT cc_commitfk FOREIGN KEY (commit_id, repository_id, run_id)
+      REFERENCES commits (sha, repository_id, run_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT cc_userfk FOREIGN KEY (user_id, fetched_at)
-      REFERENCES users (id, fetched_at) MATCH SIMPLE
+  CONSTRAINT cc_userfk FOREIGN KEY (user_id, run_id)
+      REFERENCES users (id, run_id) MATCH SIMPLE
       ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT commits_comments_unique UNIQUE (id, fetched_at)
+  CONSTRAINT commits_comments_unique UNIQUE (id, run_id),
+  CONSTRAINT cc_runfk FOREIGN KEY (run_id)
+      REFERENCES runs (id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE CASCADE
 )
 WITH (
   OIDS=FALSE

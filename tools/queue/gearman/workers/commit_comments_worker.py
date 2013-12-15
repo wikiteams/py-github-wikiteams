@@ -28,6 +28,7 @@ class GitHubWorkerGetCommitComments(GitHubWorker):
         data = json.loads(gearman_job.data)
 
         try:
+            runId = data['runId']
             repositoryName = data['repositoryName']
             commitSHA = data['commitSHA']
 
@@ -42,13 +43,16 @@ class GitHubWorkerGetCommitComments(GitHubWorker):
             commit = ghRepository.get_commit(commitSHA)
             comments = commit.get_comments()
 
+            print self.gh.rate_limiting
+
             for comment in comments:
                 print '%s - %s' % (self.threadID, str(commit.sha))
 
                 print 'Try to add new commit comment - %s ...' % commit.sha
-                dbCommitComment = CommitComment.add(dbRepository[0], comment)
+                dbCommitComment = CommitComment.add(dbRepository[0], runId, comment)
 
-                # todo: add fetching commit comments
+                print self.gh.rate_limiting
+
         except github.UnknownObjectException as err:
             print "Repositorium %s/%s doesn't exist - omitting..." % (owner, name)
             logger.error("(%s) %s" % (__name__, str(err)))
@@ -65,6 +69,10 @@ class GitHubWorkerGetCommitComments(GitHubWorker):
             #retry
             self.retry(Task.GET_COMMIT_COMMENTS, data, future_date=resetRateDate, increment_attempts=False)
 
+            sleepTime = self.get_time_diff_in_seconds(resetRateDate)
+            print 'Worker %s going to sleep for %s seconds [%s]' % (self.threadID, sleepTime, resetRateDate)
+            time.sleep(sleepTime)
+
             return 'error'
 
         except WikiTeamsNotFoundException as err:
@@ -72,6 +80,7 @@ class GitHubWorkerGetCommitComments(GitHubWorker):
             logger.error("(%s) %s" % (__name__, str(err)))
 
             contributorsData = {
+                'runId': data['runId'],
                 'repositoryName': data['repositoryName'],
                 'attempts': 0
             }
