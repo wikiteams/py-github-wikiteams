@@ -1,15 +1,15 @@
 '''
-WikiTeams.pl top 32000 repos dataset creator
+WikiTeams.pl scientific dataset creator
 Please keep this file with PEP8 standard
 Dont fork without good reason, use clone instead
 
-@since 1.3
+@since 1.4.0304
 @author Oskar Jarczyk
 
-@update 18.09.2013
+@update 03.04.2014
 '''
 
-version_name = 'version 1.3 codename: october'
+version_name = 'Version 1.4 codename: Treehoppers'
 
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
@@ -25,12 +25,13 @@ import __builtin__
 import time
 import datetime
 
-auth_with_tokens = False
+auth_with_tokens = True
 use_utf8 = True
 resume_on_repo = None
 resume_stage = None
 resume_entity = None
 quota_check = 0
+github_clients = list()
 
 
 def usage():
@@ -472,11 +473,12 @@ def freeze_more():
 
 if __name__ == "__main__":
     '''
-    Starts process of work on CSV files which are output of google bigquery
-    whenever intelli_git.py is executed as an standalone program
+    Starts process of work on CSV files which are output of Google Bigquery
+    whenever intelliGit.py is executed as an standalone program
+    the program reads through the input and gets all data bout programmers
     '''
     scream.say('Start main execution')
-    scream.say('Welcome to WikiTeams.pl GitHub repo getter!')
+    scream.say('Welcome to WikiTeams.pl GitHub repo analyzer!')
     scream.say(version_name)
 
     secrets = []
@@ -496,17 +498,23 @@ if __name__ == "__main__":
 
     scream.say(str(len(credential_list)) + ' full credentials successfully loaded')
 
-    if auth_with_tokens:
-        gh = Github(client_id=credential_list[0]['client_id'], client_secret=credential_list[0]['client_secret'])
-    else:
-        #print login_or_token__
-        #print pass_string
-        gh = Github(credential_list[0]['login'], credential_list[0]['pass'])
+    for credential in credential_list:
+        if auth_with_tokens:
+            gh = Github(client_id=credential['client_id'], client_secret=credential['client_secret'])
+            github_clients.append(gh)
+            print gh.oauth_scopes
+            print gh.rate_limiting
+        else:
+            gh = Github(credential['login'], credential['pass'])
+            print gh.oauth_scopes
+            print gh.rate_limiting
+            github_clients.append(gh)
 
     is_gc_turned_on = 'turned on' if str(gc.isenabled()) else 'turned off'
     scream.ssay('Garbage collector is ' + is_gc_turned_on)
 
-    make_headers()
+    #TO DO: do it as a last item, it is less important
+    #make_headers()
 
     for filename in file_names:
         scream.say('------ WORKING WITH FILE : ' + filename)
