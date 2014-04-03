@@ -78,9 +78,7 @@ retrieved from Google BigQuery consisted of repo name, owner
 and sorted by number of forks and watchers, for analysis we
 take around 32k biggest GitHub repositories
 '''
-file_names = ['by-forks-20028-33', 'by-forks-20028-44',
-              'by-watchers-3391-118', 'by-watchers-129-82',
-              'by-watchers-82-70']
+input_filename = 'result_stargazers_2013_final_mature.csv'
 repos_reported_nonexist = []
 
 
@@ -89,6 +87,16 @@ class MyDialect(csv.Dialect):
     skipinitialspace = True
     quoting = csv.QUOTE_MINIMAL
     delimiter = ','
+    escapechar = '\\'
+    quotechar = '"'
+    lineterminator = '\n'
+
+
+class RepoReaderDialect(csv.Dialect):
+    strict = True
+    skipinitialspace = True
+    quoting = csv.QUOTE_ALL
+    delimiter = ';'
     escapechar = '\\'
     quotechar = '"'
     lineterminator = '\n'
@@ -516,41 +524,31 @@ if __name__ == "__main__":
     #TO DO: do it as a last item, it is less important
     #make_headers()
 
-    for filename in file_names:
-        scream.say('------ WORKING WITH FILE : ' + filename)
-        filename_ = 'data/' if sys.platform == 'linux2' else 'data\\'
-        filename__ = filename_ + filename + '.csv'
-        with open(filename__, 'rb') as source_csvfile:
-            reposReader = csv.reader(source_csvfile,
-                                     delimiter=',')
-            reposReader.next()
-            for row in reposReader:
-                scream.log('Processing row: ' + str(row))
-                name = row[0]
-                owner = row[1]
+    scream.say('------ WORKING WITH FILE : ' + input_filename)
+    filename_ = 'data/' if sys.platform == 'linux2' else 'data\\'
+    filename__ = filename_ + input_filename
+    with open(filename__, 'rb') as source_csvfile:
+        reposReader = UnicodeReader(f=source_csvfile, dialect=RepoReaderDialect)
+        reposReader.next()
+        for row in reposReader:
+            scream.log('Processing row: ' + str(row))
+            url = row[1]
+            owner = row[0]
+            name = row[2]
 
-                #here eleminate repos without owner, rly
-                if len(owner.strip()) < 1:
-                    scream.log_warning('Skipping orphan repo: ' + name)
-                    continue
-                    #print 'length < 1'
+            key = owner + '/' + name
+            scream.log('Key built: ' + key)
 
-                '12. Liczba Fork'
-                forks = row[2]
-                watchers = row[3]
-                key = owner + '/' + name
-                scream.log('Key built: ' + key)
+            repo = MyRepository()
+            repo.setKey(key)
+            repo.setInitials(name, owner)
 
-                repo = MyRepository()
-                repo.setKey(key)
-                repo.setInitials(name, owner, watchers, forks)
-
-                #check here if repo dont exist already in dictionary!
-                if key in repos:
-                    scream.log('We already found rep ' + key +
-                               ' in the dictionary..')
-                else:
-                    repos[key] = repo
+            #check here if repo dont exist already in dictionary!
+            if key in repos:
+                scream.log('We already found rep ' + key +
+                           ' in the dictionary..')
+            else:
+                repos[key] = repo
 
     scream.say('Finished creating dictionary, size of dict is: ' +
                str(len(repos)))

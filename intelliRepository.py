@@ -62,7 +62,7 @@ class MyRepository():
 
     'basicly first init of data transcripted from input (csvs)'
     'name with owner, and count of forks and watchers'
-    def setInitials(self, name, owner, watchers, forks):
+    def setInitials(self, name, owner, watchers=None, forks=None):
         self.repository_name = name
         self.repository_owner = owner
         self.repository_watchers_count = watchers
