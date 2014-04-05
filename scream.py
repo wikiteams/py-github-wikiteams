@@ -13,18 +13,18 @@ intelliTag_verbose = True
 
 def log(s):
     if intelliTag_verbose:
-        logger.info(s)
+        logger.info(str(s))
 
 
 def say(s):
     if intelliTag_verbose:
-        print s
+        print str(s)
 
 
 def ssay(s):
     if intelliTag_verbose:
-        print s
-        logger.info(s)
+        print str(s)
+        logger.info(str(s))
 
 
 def log_error(s):

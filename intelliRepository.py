@@ -57,6 +57,12 @@ class MyRepository():
     def getKey(self):
         return self.key
 
+    def setUrl(self, url):
+        self.repository_url = url
+
+    def getUrl(self):
+        return self.repository_url
+
     def purge(self):
         'TO DO: implement this method'
 
