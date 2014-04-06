@@ -3,10 +3,10 @@ WikiTeams.pl scientific dataset creator
 Please keep this file with PEP8 standard
 Dont fork without good reason, use clone instead
 
-@since 1.4.0405
+@since 1.4.0407
 @author Oskar Jarczyk
 
-@update 05.04.2014
+@update 07.04.2014
 '''
 
 version_name = 'Version 1.4 codename: Treehoppers'
@@ -17,13 +17,12 @@ import csv
 import getopt
 import scream
 import gc
+import os.path
 import sys
 import codecs
 import cStringIO
-import intelliNotifications
 import __builtin__
 import time
-import datetime
 
 auth_with_tokens = True
 use_utf8 = True
@@ -178,10 +177,20 @@ def developer_revealed(repository, repo, contributor, result_writer):
     scream.say(followers)
     his_repositories = contributor.get_repos()
     #3
-    #for his_repo in his_repositories:
+    total_his_repositories = 0
+    total_his_stars = 0
+    total_his_watchers = 0
+    total_his_forks = 0
+    total_network_count = 0
+    for his_repo in his_repositories:
         # his_repo.get_stats_contributors()
         # rather do it by web scrapping - no economic way just to get the interger value..
-        #his_repo_name = his_repo.full_name
+        check_quota_limit()
+        total_his_repositories += 1
+        total_his_forks += his_repo.forks_count
+        total_his_stars += his_repo.stargazers_count
+        total_his_watchers += his_repo.watchers_count
+        total_network_count += his_repo.network_count
         # start webscrapping
     #4
     # almost impossible to get
@@ -193,7 +202,9 @@ def developer_revealed(repository, repo, contributor, result_writer):
     contributions = contributor.contributions
     created_at = contributor.created_at
     hireable = contributor.hireable
-    result_writer.writerow([repo.getUrl(), repo.getName(), repo.getOwner(), login, name, followers, following, collaborators, company, contributions, created_at, hireable])
+    result_writer.writerow([repo.getUrl(), repo.getName(), repo.getOwner(), login,
+                           name, followers, following, collaborators, company, contributions,
+                           created_at, hireable, total_his_repositories, total_his_stars, total_his_watchers, total_his_forks, total_network_count])
 
 
 def check_quota_limit():
@@ -221,8 +232,15 @@ def freeze():
     while limit.rate.remaining < 15:
         time.sleep(sleepy_head_time)
 
-#def freeze_more():
-#    freeze()
+
+def make_headers(filename_for_headers):
+    with open(filename_for_headers, 'ab') as output_csvfile:
+        devs_head_writer = UnicodeWriter(output_csvfile) if use_utf8 else csv.writer(output_csvfile, dialect=WriterDialect)
+        tempv = ('repo_url', 'repo_name', 'repo_owner', 'dev_login', 'dev_name',
+                 'followers', 'following', 'collaborators', 'company', 'contributions', 'created_at', 'hireable',
+                 'total_his_repositories', 'total_his_stars', 'total_his_watchers', 'total_his_forks', 'total_network_count')
+        devs_head_writer.writerow(tempv)
+
 
 if __name__ == "__main__":
     '''
@@ -303,6 +321,9 @@ if __name__ == "__main__":
 
     iteration_step_count = 0
 
+    if not os.path.isfile('developers_revealed.csv'):
+        make_headers('developers_revealed.csv')
+
     with open('developers_revealed.csv', 'ab') as result_file:
         result_writer = UnicodeWriter(result_file)
         for key in repos:
@@ -322,8 +343,8 @@ if __name__ == "__main__":
                 repo.setRepoObject(repository)
             except UnknownObjectException as e:
                 scream.log_warning('Repo with key + ' + key +
-                                    ' not found, error({0}): {1}'.
-                                    format(e.status, e.data))
+                                   ' not found, error({0}): {1}'.
+                                   format(e.status, e.data))
                 repos_reported_nonexist.append(key)
                 continue
 
@@ -362,12 +383,12 @@ if __name__ == "__main__":
                 finally:
                     resume_stage = None
 
-            if resume_stage in [None, 'languages']:
-                scream.ssay('Getting languages of a repo')
-                languages = repository.get_languages()  # dict object (json? object)
-                repo.setLanguage(languages)
-                scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
-                resume_stage = None
+            #if resume_stage in [None, 'languages']:
+            #    scream.ssay('Getting languages of a repo')
+            #    languages = repository.get_languages()  # dict object (json? object)
+            #    repo.setLanguage(languages)
+            #    scream.log('Added languages ' + str(languages) + ' to a repo ' + key)
+            #    resume_stage = None
 
             # to juz mamy
             # if resume_stage in [None, 'labels']:
@@ -434,29 +455,29 @@ if __name__ == "__main__":
             #     finally:
             #         resume_stage = None
 
-            '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
-            'there is no evidence for existance in GitHub API'
-            'of a function for getting skill stats in a commit'
-            'TO DO: implement a workaround with BEAUTIFUL SOUP'
+            # '3. Liczba Commit w poszczegolnych skill (wiele zmiennych)'
+            # 'there is no evidence for existance in GitHub API'
+            # 'of a function for getting skill stats in a commit'
+            # 'TO DO: implement a workaround with BEAUTIFUL SOUP'
 
-            if resume_stage in [None, 'stargazers']:
-                scream.ssay('Getting stargazers of a repo')
-                '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
-                stargazers = repository.get_stargazers()
-                repo_stargazers = []
-                for stargazer in stargazers:
-                    repo_stargazers.append(stargazer)
-                    check_quota_limit()
-                repo.setStargazers(repo_stargazers)
-                scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
-                           ' to a repo ' + key)
-                resume_stage = None
+            # if resume_stage in [None, 'stargazers']:
+            #     scream.ssay('Getting stargazers of a repo')
+            #     '4. Liczba gwiazdek  (to zostanie uzyte jako jakosc zespolu)'
+            #     stargazers = repository.get_stargazers()
+            #     repo_stargazers = []
+            #     for stargazer in stargazers:
+            #         repo_stargazers.append(stargazer)
+            #         check_quota_limit()
+            #     repo.setStargazers(repo_stargazers)
+            #     scream.log('Added stargazers of count: ' + str(len(repo_stargazers)) +
+            #                ' to a repo ' + key)
+            #     resume_stage = None
 
-            scream.say('Persisting a repo to CSV output...')
+            # scream.say('Persisting a repo to CSV output...')
 
-            'handle here writing to output, dont make it at end when stack'
-            'is full of repos, but do it a repo by repo...'
-            output_data(repo)
+            # 'handle here writing to output, dont make it at end when stack'
+            # 'is full of repos, but do it a repo by repo...'
+            # output_data(repo)
 
             scream.ssay('Finished processing repo: ' + key + '.. moving on... ')
 
