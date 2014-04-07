@@ -330,7 +330,8 @@ if __name__ == "__main__":
 
     with open('developers_revealed_from_top.csv', 'ab') as result_file:
         result_writer = UnicodeWriter(result_file)
-        for repo in repos:
+        while not repos.empty():
+            repo = repos.get()
             key = repo.getKey()
 
             if resume_on_repo is not None:
