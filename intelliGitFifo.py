@@ -3,10 +3,10 @@ WikiTeams.pl scientific dataset creator
 Please keep this file with PEP8 standard
 Dont fork without good reason, use clone instead
 
-@since 1.4.0407
+@since 1.4.0408
 @author Oskar Jarczyk
 
-@update 07.04.2014
+@update 08.04.2014
 '''
 
 version_name = 'Version 1.4 codename: Treehoppers'
@@ -14,6 +14,7 @@ version_name = 'Version 1.4 codename: Treehoppers'
 from intelliRepository import MyRepository
 from github import Github, UnknownObjectException, GithubException
 import csv
+from Queue import Queue
 import getopt
 import scream
 import gc
@@ -71,7 +72,7 @@ for o, a in opts:
         resume_entity = a
         scream.ssay('Resume on stage with entity ' + str(resume_entity))
 
-repos = dict()
+repos = Queue()
 
 '''
 Explanation of an input data, theye are CSV file with data
@@ -80,7 +81,7 @@ and sorted by number of forks and watchers, for analysis we
 take around 32k biggest GitHub repositories
 '''
 input_filename = 'result_stargazers_2013_final_mature.csv'
-repos_reported_nonexist = open('reported_nonexist.csv', 'ab')
+repos_reported_nonexist = open('reported_nonexist_fifo.csv', 'ab')
 
 
 class WriterDialect(csv.Dialect):
@@ -296,6 +297,7 @@ if __name__ == "__main__":
     with open(filename__, 'rb') as source_csvfile:
         reposReader = UnicodeReader(f=source_csvfile, dialect=RepoReaderDialect)
         reposReader.next()
+        previous = ''
         for row in reposReader:
             scream.log('Processing row: ' + str(row))
             url = row[1]
@@ -311,24 +313,25 @@ if __name__ == "__main__":
             repo.setUrl(url)
 
             #check here if repo dont exist already in dictionary!
-            if key in repos:
+            if key == previous:
                 scream.log('We already found rep ' + key +
                            ' in the dictionary..')
             else:
-                repos[key] = repo
+                repos.put(repo)
+                previous = key
 
-    scream.say('Finished creating dictionary, size of dict is: ' +
-               str(len(repos)))
+    scream.say('Finished creating queue, size of fifo construct is: ' +
+               str(repos.qsize()))
 
     iteration_step_count = 0
 
-    if not os.path.isfile('developers_revealed.csv'):
-        make_headers('developers_revealed.csv')
+    if not os.path.isfile('developers_revealed_from_top.csv'):
+        make_headers('developers_revealed_from_top.csv')
 
-    with open('developers_revealed.csv', 'ab') as result_file:
+    with open('developers_revealed_from_top.csv', 'ab') as result_file:
         result_writer = UnicodeWriter(result_file)
-        for key in repos:
-            repo = repos[key]
+        for repo in repos:
+            key = repo.getKey()
 
             if resume_on_repo is not None:
                 resume_on_repo_name = resume_on_repo.split(',')[0]
