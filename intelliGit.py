@@ -17,6 +17,7 @@ import csv
 import getopt
 import scream
 import gc
+import os
 import os.path
 import sys
 import codecs
@@ -79,7 +80,7 @@ and sorted by number of forks and watchers, for analysis we
 take around 32k biggest GitHub repositories
 '''
 input_filename = 'result_stargazers_2013_final_mature.csv'
-repos_reported_nonexist = []
+repos_reported_nonexist = open('reported_nonexist.csv', 'ab')
 
 
 class WriterDialect(csv.Dialect):
@@ -184,16 +185,14 @@ def developer_revealed(repository, repo, contributor, result_writer):
     total_network_count = 0
     for his_repo in his_repositories:
         # his_repo.get_stats_contributors()
-        # rather do it by web scrapping - no economic way just to get the interger value..
         check_quota_limit()
         total_his_repositories += 1
         total_his_forks += his_repo.forks_count
         total_his_stars += his_repo.stargazers_count
         total_his_watchers += his_repo.watchers_count
         total_network_count += his_repo.network_count
-        # start webscrapping
     #4
-    # almost impossible to get
+    # as far as i know - almost impossible to get
     # 5
     # blazej task, not mine
     # 6
@@ -203,8 +202,10 @@ def developer_revealed(repository, repo, contributor, result_writer):
     created_at = contributor.created_at
     hireable = contributor.hireable
     result_writer.writerow([repo.getUrl(), repo.getName(), repo.getOwner(), login,
-                           name, followers, following, collaborators, company, contributions,
-                           created_at, hireable, total_his_repositories, total_his_stars, total_his_watchers, total_his_forks, total_network_count])
+                           (name if name is not None else ''), str(followers), str(following),
+                           str(collaborators), (company if company is not None else ''), str(contributions),
+                           str(created_at), (str(hireable) if hireable is not None else ''), str(total_his_repositories), str(total_his_stars),
+                           str(total_his_watchers), str(total_his_forks), str(total_network_count)])
 
 
 def check_quota_limit():
@@ -271,7 +272,7 @@ if __name__ == "__main__":
 
     for credential in credential_list:
         if auth_with_tokens:
-            local_gh = Github(client_id=credential['client_id'], client_secret=credential['client_secret'])
+            local_gh = Github(login_or_token=credential['pass'], client_id=credential['client_id'], client_secret=credential['client_secret'], user_agent=credential['login'])
             github_clients.append(local_gh)
             #scream.say(local_gh.get_api_status)
             scream.say(local_gh.rate_limiting)
@@ -337,6 +338,10 @@ if __name__ == "__main__":
                         (resume_on_repo_owner == repo.getOwner())):
                     iteration_step_count += 1
                     continue
+                else:
+                    resume_on_repo = None
+                    iteration_step_count += 1
+                    continue
 
             try:
                 repository = github_client.get_repo(repo.getKey())
@@ -345,7 +350,13 @@ if __name__ == "__main__":
                 scream.log_warning('Repo with key + ' + key +
                                    ' not found, error({0}): {1}'.
                                    format(e.status, e.data))
-                repos_reported_nonexist.append(key)
+                repos_reported_nonexist.write(key + os.linesep)
+                continue
+            except:
+                scream.log_warning('Repo with key + ' + key +
+                                   ' not found, error({0}): {1}'.
+                                   format(e.status, e.data))
+                repos_reported_nonexist.write(key + os.linesep)
                 continue
 
             iteration_step_count += 1
