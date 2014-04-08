@@ -24,6 +24,7 @@ import sys
 import codecs
 import cStringIO
 import __builtin__
+import socket
 import time
 
 auth_with_tokens = True
@@ -82,6 +83,7 @@ take around 32k biggest GitHub repositories
 '''
 input_filename = 'result_stargazers_2013_final_mature.csv'
 repos_reported_nonexist = open('reported_nonexist_fifo.csv', 'ab')
+repos_reported_execution_error = open('reported_execution_error_fifo.csv', 'ab')
 
 
 class WriterDialect(csv.Dialect):
@@ -374,10 +376,17 @@ if __name__ == "__main__":
                     contributors = repository.get_contributors()
                     check_quota_limit()
                     repo_contributors = []
-                    for contributor in contributors:
-                        repo_contributors.append(contributor)
-                        check_quota_limit()
-                        developer_revealed(repository, repo, contributor, result_writer)
+                    try:
+                        for contributor in contributors:
+                            repo_contributors.append(contributor)
+                            check_quota_limit()
+                            developer_revealed(repository, repo, contributor, result_writer)
+                    except TypeError:
+                        repos_reported_execution_error.write(key + os.linesep)
+                    except socket.timeout:
+                        repos_reported_execution_error.write(key + os.linesep)
+                    except:
+                        repos_reported_execution_error.write(key + os.linesep)
                     repo.setContributors(repo_contributors)
                     #repo.setContributorsCount(len(repo_contributors))
                     'class fields are not garbage, '
